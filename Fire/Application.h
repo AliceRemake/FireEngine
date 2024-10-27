@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : Fire.h
+  * @file           : Application.h
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,10 +10,22 @@
 
 
 
-#ifndef FIRE_H
-#define FIRE_H
+#ifndef FIRE_APPLICATION_H
+#define FIRE_APPLICATION_H
 
-#include "Fire/Logger.h"
-#include "Fire/Application.h"
+#include "Core.h"
 
-#endif //FIRE_H
+namespace FIRE {
+
+class FIRE_API Application {
+
+public:
+  static Application* CreateApplication();
+  
+  FIRE_NORETURN void Run();
+
+};
+
+}
+
+#endif //FIRE_APPLICATION_H

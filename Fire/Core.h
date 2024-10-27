@@ -15,9 +15,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstddef>
+#include <cstdint>
 #include <cassert>
 
-/* Fire Platform */
 #ifdef FIRE_PLATFORM_WINDOWS
   #ifdef FIRE_SHARED_LIBRARY
     #define FIRE_API __declspec(dllexport)
@@ -26,7 +26,6 @@
   #endif
 #endif
 
-/* CXX Features */
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #define FIRE_NOEXCEPT noexcept
 #else
@@ -39,6 +38,12 @@
 #define FIRE_CONSTEXPR
 #endif
 
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#define FIRE_NORETURN [[noreturn]]
+#else
+#define FIRE_NORETURN
+#endif
+
 #if defined(__cplusplus) && __cplusplus >= 201703L
 #define FIRE_NODISCARD [[nodiscard]]
 #else
@@ -46,16 +51,15 @@
 #endif
 
 #if defined(__cplusplus) && __cplusplus >= 202002L
+#include <type_traits>
 template <typename T>
 concept TrivialType = std::is_trivial_v<T>;
 #else
 #endif
 
-/* convert a macro to string */
 #define __STR(exp) (#exp)
 #define STR(exp) __STR(exp)
 
-/* assert for debug */
 #ifdef NDEBUG
 #define FIRE_ASSERT(exp) do { (void)exp; } while (0)
 #else
@@ -83,5 +87,35 @@ concept TrivialType = std::is_trivial_v<T>;
 using FireResult = uint32_t;
 constexpr FireResult FIRE_SUCCESS = 0;
 constexpr FireResult FIRE_FAILURE = 1;
+
+#include <vector>
+template<typename T>
+using Vector = std::vector<T>;
+
+#include <string>
+using String = std::string;
+
+#include <tuple>
+template<typename T, typename U>
+using Pair = std::pair<T, U>;
+
+#include <optional>
+template<typename T>
+using Optional = std::optional<T>;
+
+#include <memory>
+template<typename T>
+using Ref = std::shared_ptr<T>;
+template<typename T, typename... Args>
+FIRE_CONSTEXPR Ref<T> CreateRef(Args&&... args) {
+  return std::make_shared<T>(std::forward<args>...);
+}
+
+template<typename T>
+using Uni = std::unique_ptr<T>;
+template<typename T, typename... Args>
+FIRE_CONSTEXPR Uni<T> CreateUni(Args&&... args) {
+  return std::make_unique<T>(std::forward<args>...);
+}
 
 #endif // FIRE_CORE_H

@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : Fire.h
+  * @file           : Application.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,10 +10,12 @@
 
 
 
-#ifndef FIRE_H
-#define FIRE_H
+#include "Application.h"
 
-#include "Fire/Logger.h"
-#include "Fire/Application.h"
+namespace FIRE {
 
-#endif //FIRE_H
+Application* Application::CreateApplication() { return new Application; }
+  
+void Application::Run() { while(true); }
+
+}

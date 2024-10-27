@@ -1,3 +1,7 @@
 [submodule "Fire/External/spdlog"]
 	path = Fire/External/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "Fire/External/SDL2"]
+	path = Fire/External/SDL2
+	url = https://github.com/libsdl-org/SDL.git
+	branch = SDL2
