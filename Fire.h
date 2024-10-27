@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : sandbox.cpp
+  * @file           : Fire.h
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -9,11 +9,10 @@
   */
 
 
-#include "Fire/Fire.h"
 
-int main(int argc, char** argv) {
+#ifndef FIRE_H
+#define FIRE_H
 
-  Print();
-  
-  return 0;
-}
+#include "Fire/Logger.h"
+
+#endif //FIRE_H

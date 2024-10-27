@@ -1,0 +1,3 @@
+[submodule "Fire/External/spdlog"]
+	path = Fire/External/spdlog
+	url = https://github.com/gabime/spdlog.git
