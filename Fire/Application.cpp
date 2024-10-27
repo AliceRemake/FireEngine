@@ -11,11 +11,12 @@
 
 
 #include "Application.h"
+#include "Logger.h"
 
 namespace FIRE {
 
-Application* Application::CreateApplication() { return new Application; }
-  
-void Application::Run() { while(true); }
+void Application::Run() FIRE_NOEXCEPT {
+  FIRE_INFO("Hello Fire Engin!\n");
+}
 
 }

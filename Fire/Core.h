@@ -39,6 +39,12 @@
 #endif
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
+#define FIRE_OVERRIDE override
+#else
+#define FIRE_OVERRIDE
+#endif
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
 #define FIRE_NORETURN [[noreturn]]
 #else
 #define FIRE_NORETURN

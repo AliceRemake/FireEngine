@@ -19,12 +19,16 @@ namespace FIRE {
 
 class Window {
 public:
-  virtual ~Window() = default;
-  virtual String& GetTitle() = 0;
-  virtual uint32_t GetWidth() = 0;
-  virtual uint32_t GetHeight() = 0;
-  virtual void* GetNativeWindow() = 0;
+  virtual ~Window() FIRE_NOEXCEPT = default;
+  virtual FIRE_CONSTEXPR const String& GetTitle() const FIRE_NOEXCEPT = 0;
+  virtual FIRE_CONSTEXPR uint32_t GetWidth() const FIRE_NOEXCEPT = 0;
+  virtual FIRE_CONSTEXPR uint32_t GetHeight() const FIRE_NOEXCEPT = 0;
+  virtual FIRE_CONSTEXPR const void* GetNativeWindow() const FIRE_NOEXCEPT = 0;
 };
+
+Window* CreateSDL2Window(const char* title, uint32_t width, uint32_t height, uint32_t flags) FIRE_NOEXCEPT;
+
+void DestroySDL2Window(Window* window) FIRE_NOEXCEPT;
 
 }
 

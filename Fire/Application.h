@@ -17,13 +17,11 @@
 
 namespace FIRE {
 
+// ReSharper disable once CppClassCanBeFinal
 class FIRE_API Application {
-
 public:
-  static Application* CreateApplication();
-  
-  FIRE_NORETURN void Run();
-
+  virtual ~Application() FIRE_NOEXCEPT = default;
+  virtual void Run() FIRE_NOEXCEPT;
 };
 
 }

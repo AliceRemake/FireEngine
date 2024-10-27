@@ -37,10 +37,14 @@ PUBLIC
   Logger.cpp
   Application.h
   Application.cpp
+  Window/Window.h
+  Window/Window.cpp
+  Window/SDL2Window.h
+  Window/SDL2Window.cpp
 )
 
 TARGET_LINK_LIBRARIES(Fire
 PUBLIC
   spdlog
-  SDL2
+  sdl2
 )
