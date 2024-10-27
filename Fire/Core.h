@@ -90,6 +90,37 @@ concept TrivialType = std::is_trivial_v<T>;
 #define VK_CHECK(stmt) do { assert(stmt == VK_SUCCESS); } while (0)
 #endif
 
+#define BIT(x) ((1<<x))
+
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR bool IsA(FROM* ptr) FIRE_NOEXCEPT {
+  return TO::ClassOf(ptr);
+}
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR bool IsA(const FROM* ptr) FIRE_NOEXCEPT {
+  return TO::ClassOf(ptr);
+}
+
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR TO* Cast(FROM* ptr) FIRE_NOEXCEPT {
+  FIRE_ASSERT(IsA<TO>(ptr));
+  return static_cast<TO*>(ptr);
+}
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR const TO* Cast(const FROM* ptr) FIRE_NOEXCEPT {
+  FIRE_ASSERT(IsA<TO>(ptr));
+  return static_cast<const TO*>(ptr);
+}
+
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR TO* DynCast(FROM* ptr) FIRE_NOEXCEPT {
+  return IsA<TO>(ptr) ? Cast<TO>(ptr) : nullptr;
+}
+template<typename TO, typename FROM>
+FIRE_CONSTEXPR const TO* DynCast(const FROM* ptr) FIRE_NOEXCEPT {
+  return IsA<TO>(ptr) ? Cast<TO>(ptr) : nullptr;
+}
+
 using FireResult = uint32_t;
 constexpr FireResult FIRE_SUCCESS = 0;
 constexpr FireResult FIRE_FAILURE = 1;

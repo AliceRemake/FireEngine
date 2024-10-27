@@ -19,7 +19,21 @@ namespace FIRE {
 
 class Window {
 public:
+  enum WindowKind : uint32_t{
+    FIRE_WINDOW_KIND_SDL2,
+  };
+
+private:
+  const WindowKind kind; 
+
+public:
+  FIRE_CONSTEXPR WindowKind GetKind() const FIRE_NOEXCEPT { return kind; }
+
+protected:
+  explicit Window(WindowKind kind) FIRE_NOEXCEPT;
   virtual ~Window() FIRE_NOEXCEPT = default;
+
+public:
   virtual FIRE_CONSTEXPR const String& GetTitle() const FIRE_NOEXCEPT = 0;
   virtual FIRE_CONSTEXPR uint32_t GetWidth() const FIRE_NOEXCEPT = 0;
   virtual FIRE_CONSTEXPR uint32_t GetHeight() const FIRE_NOEXCEPT = 0;

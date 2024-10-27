@@ -15,6 +15,8 @@
 
 namespace FIRE {
 
+Window::Window(const WindowKind kind) FIRE_NOEXCEPT : kind(kind) {}
+
 Window* CreateSDL2Window(const char* title, const uint32_t width, const uint32_t height, const uint32_t flags) FIRE_NOEXCEPT {
   return SDL2Window::Create(title, width, height, flags);
 }

@@ -18,6 +18,8 @@
 #include "Fire/Application.h"
 #include "Fire/Window/Window.h"
 #include "Fire/Window/SDL2Window.h"
+#include "Fire/Event/Event.h"
+#include "Fire/Event/WindowEvent.h"
 
 #include "Fire/Entry.h"
 

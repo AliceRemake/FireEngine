@@ -40,25 +40,11 @@ SDL2Window* SDL2Window::Create(const char* title, const uint32_t width, const ui
   return sdl2_window;
 }
 
+SDL2Window::SDL2Window() FIRE_NOEXCEPT : Window(FIRE_WINDOW_KIND_SDL2), title(), width(0), height(0), window(nullptr) {}
+
 void SDL2Window::Destroy(const SDL2Window* sdl2_window) FIRE_NOEXCEPT {
   if (sdl2_window == nullptr) return;
   SDL_DestroyWindow(sdl2_window->window);
-}
-
-FIRE_CONSTEXPR const String& SDL2Window::GetTitle() const FIRE_NOEXCEPT {
-  return title;
-}
-
-FIRE_CONSTEXPR uint32_t SDL2Window::GetWidth() const FIRE_NOEXCEPT {
-  return width;
-}
-
-FIRE_CONSTEXPR uint32_t SDL2Window::GetHeight() const FIRE_NOEXCEPT {
-  return height;
-}
-
-FIRE_CONSTEXPR const void* SDL2Window::GetNativeWindow() const FIRE_NOEXCEPT {
-  return window;
 }
 
 }

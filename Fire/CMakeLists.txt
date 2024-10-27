@@ -41,6 +41,10 @@ PUBLIC
   Window/Window.cpp
   Window/SDL2Window.h
   Window/SDL2Window.cpp
+  Event/Event.h
+  Event/Event.cpp
+  Event/WindowEvent.h
+  Event/WindowEvent.cpp
 )
 
 TARGET_LINK_LIBRARIES(Fire
