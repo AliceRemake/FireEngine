@@ -1,22 +1,15 @@
 /**
   ******************************************************************************
-  * @file           : Application.cpp
+  * @file           : Layer.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
-  * @date           : 24-10-27
+  * @date           : 24-10-28
   ******************************************************************************
   */
 
 
 
-#include "Application.h"
+#include "Layer.h"
 
-namespace FIRE {
-
-const Window& Application::GetWindow() const FIRE_NOEXCEPT {
-  FIRE_ASSERT(window != nullptr);
-  return *window;
-}
-
-}
+namespace FIRE {}

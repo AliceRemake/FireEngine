@@ -14,14 +14,21 @@
 #define FIRE_APPLICATION_H
 
 #include "Core.h"
+#include "Event/Event.h"
+#include "Window/Window.h"
 
 namespace FIRE {
 
-// ReSharper disable once CppClassCanBeFinal
 class FIRE_API Application {
+protected:
+  Uni<Window> window = nullptr;
+  
 public:
   virtual ~Application() FIRE_NOEXCEPT = default;
-  virtual void Run() FIRE_NOEXCEPT;
+  const Window& GetWindow() const FIRE_NOEXCEPT;
+  virtual void Run() FIRE_NOEXCEPT = 0;
+  virtual void OnUpdate() FIRE_NOEXCEPT = 0;
+  virtual void OnEvent(const Event& event) FIRE_NOEXCEPT = 0;
 };
 
 }

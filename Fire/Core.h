@@ -72,23 +72,23 @@ concept TrivialType = std::is_trivial_v<T>;
 #define FIRE_ASSERT(exp) do { assert(exp); } while (0)
 #endif
 
-#ifdef NDEBUG
-#define VK_ASSERT(exp) do { (void)exp; } while (0)
-#else
-#define VK_ASSERT(exp) do { assert(exp == VK_NULL_HANDLE); } while (0)
-#endif
+// #ifdef NDEBUG
+// #define VK_ASSERT(exp) do { (void)exp; } while (0)
+// #else
+// #define VK_ASSERT(exp) do { assert(exp == VK_NULL_HANDLE); } while (0)
+// #endif
 
-#ifdef NDEBUG
-#define SDL_ASSERT(exp) do { (void)exp; } while (0)
-#else
-#define SDL_ASSERT(exp) do { assert(exp == SDL_TRUE); } while (0)
-#endif
+// #ifdef NDEBUG
+// #define SDL_ASSERT(exp) do { (void)exp; } while (0)
+// #else
+// #define SDL_ASSERT(exp) do { assert(exp == SDL_TRUE); } while (0)
+// #endif
 
-#ifdef NDEBUG
-#define VK_CHECK(stmt) do { (void)stmt; } while (0)
-#else
-#define VK_CHECK(stmt) do { assert(stmt == VK_SUCCESS); } while (0)
-#endif
+// #ifdef NDEBUG
+// #define VK_CHECK(stmt) do { (void)stmt; } while (0)
+// #else
+// #define VK_CHECK(stmt) do { assert(stmt == VK_SUCCESS); } while (0)
+// #endif
 
 #define BIT(x) ((1<<x))
 
@@ -140,19 +140,35 @@ using Pair = std::pair<T, U>;
 template<typename T>
 using Optional = std::optional<T>;
 
+#include <unordered_set>
+template<typename T>
+using HashSet = std::unordered_set<T>;
+
+#include <unordered_map>
+template<typename K, typename V>
+using HashMap = std::unordered_map<K, V>;
+
+#include <filesystem>
+namespace FS = std::filesystem;
+using Path = FS::path;
+
+#include <functional>
+template<typename T>
+using Function = std::function<T>;
+
 #include <memory>
 template<typename T>
 using Ref = std::shared_ptr<T>;
 template<typename T, typename... Args>
 FIRE_CONSTEXPR Ref<T> CreateRef(Args&&... args) {
-  return std::make_shared<T>(std::forward<args>...);
+  return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
 template<typename T>
 using Uni = std::unique_ptr<T>;
 template<typename T, typename... Args>
 FIRE_CONSTEXPR Uni<T> CreateUni(Args&&... args) {
-  return std::make_unique<T>(std::forward<args>...);
+  return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
 #endif // FIRE_CORE_H

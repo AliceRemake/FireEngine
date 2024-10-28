@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : SDL2Window.h
+  * @file           : GLFWWindow.h
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,45 +10,39 @@
 
 
 
-#ifndef FIRE_SDL2WINDOW_H
-#define FIRE_SDL2WINDOW_H
+#ifndef FIRE_GLFW_WINDOW_H
+#define FIRE_GLFW_WINDOW_H
 
-#include <SDL.h>
-#include "Window.h"
+#include <GLFW/glfw3.h>
+#include "Window/Window.h"
 
 namespace FIRE {
 
-FireResult CreateSDL2(uint32_t flags) FIRE_NOEXCEPT;
-void DestroySDL2() FIRE_NOEXCEPT;
-
-class SDL2Window final : public Window {
+class GLFWWindow final : public Window {
 public:
   static FIRE_CONSTEXPR bool ClassOf(const Window* ptr) FIRE_NOEXCEPT {
-    return ptr->GetKind() == FIRE_WINDOW_KIND_SDL2;
+    return ptr->GetKind() == FIRE_WINDOW_KIND_GLFW;
   }
   
 private:
   String title;
   uint32_t width;
   uint32_t height;
-  SDL_Window* window;
-  
-public:
-  static SDL2Window* Create(const char* title, uint32_t width, uint32_t height, uint32_t flags) FIRE_NOEXCEPT;
-  static void Destroy(const SDL2Window* sdl2_window) FIRE_NOEXCEPT;
+  GLFWwindow* window;
 
-private:
-  SDL2Window() FIRE_NOEXCEPT;
-  ~SDL2Window() FIRE_NOEXCEPT FIRE_OVERRIDE = default;
+public:
+  GLFWWindow(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
+  ~GLFWWindow() FIRE_NOEXCEPT FIRE_OVERRIDE;
+  static Uni<GLFWWindow> Create(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
 
 public:
   FIRE_CONSTEXPR const String& GetTitle() const FIRE_NOEXCEPT FIRE_OVERRIDE { return title; }
   FIRE_CONSTEXPR uint32_t GetWidth() const FIRE_NOEXCEPT FIRE_OVERRIDE { return width; }
   FIRE_CONSTEXPR uint32_t GetHeight() const FIRE_NOEXCEPT FIRE_OVERRIDE { return height; }
   FIRE_CONSTEXPR const void* GetNativeWindow() const FIRE_NOEXCEPT FIRE_OVERRIDE { return window; }
-  
+  void PollEvent() const FIRE_NOEXCEPT FIRE_OVERRIDE;
 };
 
 }
 
-#endif //FIRE_SDL2WINDOW_H
+#endif //FIRE_GLFW_WINDOW_H

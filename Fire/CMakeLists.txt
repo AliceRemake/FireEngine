@@ -2,11 +2,41 @@ ADD_SUBDIRECTORY(External)
 
 SET(FIRE_COMPILE_DEFINITIONS)
 
+# platform
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
   LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_PLATFORM_LINUX)
 ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
   LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_PLATFORM_WINDOWS)
 ENDIF ()
+
+# compiler
+# TODO
+
+OPTION(FIRE_USE_SDL2_WINDOW "fire use sdl2 window" ON)
+OPTION(FIRE_USE_GLFW_WINDOW "fire use glfw window" OFF)
+OPTION(FIRE_USE_VULKAN_RENDER "fire use vulkan render" OFF)
+OPTION(FIRE_USE_VOLK_LOADER "fire use volk loader" OFF)
+OPTION(FIRE_USE_OPENGL_RENDER "fire use opengl render" OFF)
+OPTION(FIRE_USE_GLAD_LOADER "fire use glad loader" OFF)
+
+IF (FIRE_USE_SDL2_WINDOW)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_SDL2_WINDOW)
+ENDIF()
+IF (FIRE_USE_GLFW_WINDOW)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_GLFW_WINDOW)
+ENDIF()
+IF (FIRE_USE_VULKAN_RENDER)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VULKAN_RENDER)
+ENDIF()
+IF (FIRE_USE_VOLK_LOADER)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VOLK_LOADER)
+ENDIF()
+IF (FIRE_USE_OPENGL_RENDER)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_OPENGL_RENDER)
+ENDIF()
+IF (FIRE_USE_GLAD_LOADER)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_GLAD_LOADER)
+ENDIF()
 
 LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_SHARED_LIBRARY)
 
@@ -37,18 +67,30 @@ PUBLIC
   Logger.cpp
   Application.h
   Application.cpp
-  Window/Window.h
-  Window/Window.cpp
-  Window/SDL2Window.h
-  Window/SDL2Window.cpp
   Event/Event.h
   Event/Event.cpp
   Event/WindowEvent.h
   Event/WindowEvent.cpp
+  Window/Window.h
+  Window/Window.cpp
+  Layer/Layer.h
+  Layer/Layer.cpp
+  Window/Backend/SDL2Window.h
+  Window/Backend/SDL2Window.cpp
+  Window/Backend/GLFWWindow.h
+  Window/Backend/GLFWWindow.cpp
+#  Render/Render.h
+#  Render/Render.cpp
+#  Render/VulkanRender.h
+#  Render/VulkanRender.cpp
 )
 
 TARGET_LINK_LIBRARIES(Fire
 PUBLIC
-  spdlog
-  sdl2
+  spdlog::spdlog
+  SDL2::SDL2main
+  SDL2::SDL2-static
+  glfw
+#  volk::volk
+#  GPUOpen::VulkanMemoryAllocator
 )

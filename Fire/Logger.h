@@ -19,14 +19,14 @@
 namespace FIRE {
 
 class FIRE_API Logger {
+protected:
+  static Ref<spdlog::logger> fire_logger;
+  static Ref<spdlog::logger> client_logger;
+  
 public:
   static void Init();
-  static std::shared_ptr<spdlog::logger>& GetFireLogger();
-  static std::shared_ptr<spdlog::logger>& GetClientLogger();
-
-  void a() {
-    Logger::GetFireLogger()->trace("123");
-  }
+  static Ref<spdlog::logger>& GetFireLogger();
+  static Ref<spdlog::logger>& GetClientLogger();
 };
 
 }

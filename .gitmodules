@@ -5,3 +5,12 @@
 	path = Fire/External/SDL2
 	url = https://github.com/libsdl-org/SDL.git
 	branch = SDL2
+[submodule "Fire/External/volk"]
+	path = Fire/External/volk
+	url = https://github.com/zeux/volk.git
+[submodule "Fire/External/vma"]
+	path = Fire/External/vma
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "Fire/External/glfw"]
+	path = Fire/External/glfw
+	url = https://github.com/glfw/glfw.git

@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : Application.cpp
+  * @file           : Render.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,13 +10,10 @@
 
 
 
-#include "Application.h"
+#include "Render.h"
 
 namespace FIRE {
 
-const Window& Application::GetWindow() const FIRE_NOEXCEPT {
-  FIRE_ASSERT(window != nullptr);
-  return *window;
-}
+Render::Render(RenderKind kind) FIRE_NOEXCEPT : kind(kind) {}
 
 }

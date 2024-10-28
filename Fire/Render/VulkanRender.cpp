@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : Application.cpp
+  * @file           : VulkanRender.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,13 +10,6 @@
 
 
 
-#include "Application.h"
+#include "VulkanRender.h"
 
-namespace FIRE {
-
-const Window& Application::GetWindow() const FIRE_NOEXCEPT {
-  FIRE_ASSERT(window != nullptr);
-  return *window;
-}
-
-}
+namespace FIRE {}

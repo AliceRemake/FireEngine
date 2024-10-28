@@ -14,35 +14,40 @@
 #define FIRE_WINDOW_H
 
 #include "Core.h"
+#include "Event/Event.h"
 
 namespace FIRE {
 
-class Window {
+class FIRE_API Window {
 public:
   enum WindowKind : uint32_t{
     FIRE_WINDOW_KIND_SDL2,
+    FIRE_WINDOW_KIND_GLFW,
   };
 
 private:
-  const WindowKind kind; 
+  const WindowKind kind;
 
 public:
   FIRE_CONSTEXPR WindowKind GetKind() const FIRE_NOEXCEPT { return kind; }
 
-protected:
+public:
   explicit Window(WindowKind kind) FIRE_NOEXCEPT;
   virtual ~Window() FIRE_NOEXCEPT = default;
-
+  static Uni<Window> CreateSDL2(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
+  static Uni<Window> CreateGLFW(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
+  
 public:
   virtual FIRE_CONSTEXPR const String& GetTitle() const FIRE_NOEXCEPT = 0;
   virtual FIRE_CONSTEXPR uint32_t GetWidth() const FIRE_NOEXCEPT = 0;
   virtual FIRE_CONSTEXPR uint32_t GetHeight() const FIRE_NOEXCEPT = 0;
   virtual FIRE_CONSTEXPR const void* GetNativeWindow() const FIRE_NOEXCEPT = 0;
+  virtual void PollEvent() const FIRE_NOEXCEPT = 0;
+
+public:
+  Function<void(Event&&)> event_callback = nullptr;
+  void SetEventCallback(const Function<void(Event&&)>& callback) FIRE_NOEXCEPT;
 };
-
-Window* CreateSDL2Window(const char* title, uint32_t width, uint32_t height, uint32_t flags) FIRE_NOEXCEPT;
-
-void DestroySDL2Window(Window* window) FIRE_NOEXCEPT;
 
 }
 

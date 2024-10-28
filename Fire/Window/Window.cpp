@@ -10,19 +10,24 @@
 
 
 
-#include "Window.h"
-#include "SDL2Window.h"
+#include "Window/Window.h"
+#include "Window/Backend/SDL2Window.h"
+#include "Window/Backend/GLFWWindow.h"
 
 namespace FIRE {
 
 Window::Window(const WindowKind kind) FIRE_NOEXCEPT : kind(kind) {}
 
-Window* CreateSDL2Window(const char* title, const uint32_t width, const uint32_t height, const uint32_t flags) FIRE_NOEXCEPT {
-  return SDL2Window::Create(title, width, height, flags);
+Uni<Window> Window::CreateSDL2(const char* title, const uint32_t width, const uint32_t height) FIRE_NOEXCEPT {
+  return SDL2Window::Create(title, width, height);  
 }
 
-void DestroySDL2Window(Window* window) FIRE_NOEXCEPT {
-  SDL2Window::Destroy(static_cast<SDL2Window*>(window));
+Uni<Window> Window::CreateGLFW(const char* title, const uint32_t width, const uint32_t height) FIRE_NOEXCEPT {
+  return GLFWWindow::Create(title, width, height);  
+}
+
+void Window::SetEventCallback(const Function<void(Event&&)>& callback) FIRE_NOEXCEPT {
+  event_callback = callback;
 }
 
 }

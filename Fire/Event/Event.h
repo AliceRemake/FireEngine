@@ -17,13 +17,13 @@
 
 namespace FIRE {
 
-// ReSharper disable once CppClassCanBeFinal
-class Event {
+class FIRE_API Event {
 public:
   enum EventKind : uint32_t {
     FIRE_EVENT_KIND_WINDOW_CLOSE,
     FIRE_EVENT_KIND_WINDOW_RESIZE,
     FIRE_EVENT_KIND_WINDOW_MINIMIZE,
+    FIRE_EVENT_KIND_MAXIMUM,
   };
 
 private:

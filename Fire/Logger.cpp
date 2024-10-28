@@ -16,8 +16,8 @@
 
 namespace FIRE {
 
-std::shared_ptr<spdlog::logger> fire_logger;
-std::shared_ptr<spdlog::logger> client_logger;
+Ref<spdlog::logger> Logger::fire_logger = nullptr;
+Ref<spdlog::logger> Logger::client_logger = nullptr;
 
 void Logger::Init()
 {
@@ -28,8 +28,8 @@ void Logger::Init()
   client_logger->set_level(spdlog::level::trace);
 }
 
-std::shared_ptr<spdlog::logger>& Logger::GetFireLogger() { return fire_logger; }
+Ref<spdlog::logger>& Logger::GetFireLogger() { return fire_logger; }
 
-std::shared_ptr<spdlog::logger>& Logger::GetClientLogger() { return client_logger; }
+Ref<spdlog::logger>& Logger::GetClientLogger() { return client_logger; }
 
 }
