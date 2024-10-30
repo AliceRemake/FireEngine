@@ -1,30 +1,28 @@
 /**
   ******************************************************************************
-  * @file           : Event.h
+  * @file           : OnUpdateTrait.h
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
-  * @date           : 24-10-27
+  * @date           : 24-10-30
   ******************************************************************************
   */
 
 
 
-#ifndef FIRE_EVENT_H
-#define FIRE_EVENT_H
+#ifndef FIRE_ON_UPDATE_TRAIT_H
+#define FIRE_ON_UPDATE_TRAIT_H
 
 #include "Common.h"
 
 namespace FIRE {
 
-class FIRE_API Event {
-  FIRE_RTTI_BASE(
-    Event,
-    FIRE_EVENT_KIND_WINDOW_CLOSE,
-  )
-
+class OnUpdateTrait {
+public:
+  virtual ~OnUpdateTrait() FIRE_NOEXCEPT = default;
+  virtual void OnUpdate() FIRE_NOEXCEPT = 0;
 };
-
+  
 }
 
-#endif //FIRE_EVENT_H
+#endif //FIRE_ON_UPDATE_TRAIT_H

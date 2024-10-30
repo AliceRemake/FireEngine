@@ -4,5 +4,8 @@
 
 ### Window
 
-- [x] SDL2
-- [x] GLFW
+- [X] SDL3
+
+### HRI
+
+- [X] Vulkan

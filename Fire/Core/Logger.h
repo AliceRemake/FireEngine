@@ -13,30 +13,26 @@
 #ifndef FIRE_LOGGER_H
 #define FIRE_LOGGER_H
 
+#include "Common.h"
 #include <spdlog/logger.h>
-#include "Core.h"
 
 namespace FIRE {
 
 class FIRE_API Logger {
-protected:
-  static Ref<spdlog::logger> fire_logger;
-  static Ref<spdlog::logger> client_logger;
-  
 public:
-  static void Init();
+  static void SetPattern(const String& pattern);
   static Ref<spdlog::logger>& GetFireLogger();
   static Ref<spdlog::logger>& GetClientLogger();
 };
 
-}
+#define FIRE_TRACE(...)    Logger::GetFireLogger()->trace(__VA_ARGS__)
+#define FIRE_DEBUG(...)    Logger::GetFireLogger()->debug(__VA_ARGS__)
+#define FIRE_INFO(...)     Logger::GetFireLogger()->info(__VA_ARGS__)
+#define FIRE_WARN(...)     Logger::GetFireLogger()->warn(__VA_ARGS__)
+#define FIRE_ERROR(...)    Logger::GetFireLogger()->error(__VA_ARGS__)
+#define FIRE_CRITICAL(...) Logger::GetFireLogger()->critical(__VA_ARGS__)
 
-#define FIRE_TRACE(...)    FIRE::Logger::GetFireLogger()->trace(__VA_ARGS__)
-#define FIRE_DEBUG(...)    FIRE::Logger::GetFireLogger()->debug(__VA_ARGS__)
-#define FIRE_INFO(...)     FIRE::Logger::GetFireLogger()->info(__VA_ARGS__)
-#define FIRE_WARN(...)     FIRE::Logger::GetFireLogger()->warn(__VA_ARGS__)
-#define FIRE_ERROR(...)    FIRE::Logger::GetFireLogger()->error(__VA_ARGS__)
-#define FIRE_CRITICAL(...) FIRE::Logger::GetFireLogger()->critical(__VA_ARGS__)
+}
 
 #define CLIENT_TRACE(...)    FIRE::Logger::GetClientLogger()->trace(__VA_ARGS__)
 #define CLIENT_DEBUG(...)    FIRE::Logger::GetClientLogger()->debug(__VA_ARGS__)

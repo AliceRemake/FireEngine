@@ -1,16 +1,19 @@
 [submodule "Fire/External/spdlog"]
 	path = Fire/External/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "Fire/External/SDL2"]
-	path = Fire/External/SDL2
+[submodule "Fire/External/SDL3"]
+	path = Fire/External/SDL3
 	url = https://github.com/libsdl-org/SDL.git
-	branch = SDL2
-[submodule "Fire/External/volk"]
-	path = Fire/External/volk
-	url = https://github.com/zeux/volk.git
 [submodule "Fire/External/vma"]
 	path = Fire/External/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-[submodule "Fire/External/glfw"]
-	path = Fire/External/glfw
-	url = https://github.com/glfw/glfw.git
+[submodule "Fire/External/imgui"]
+	path = Fire/External/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "Fire/External/glm"]
+	path = Fire/External/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "Fire/External/eigen"]
+	path = Fire/External/eigen
+	url = https://gitlab.com/libeigen/eigen.git

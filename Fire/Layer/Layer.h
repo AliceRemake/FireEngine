@@ -13,25 +13,30 @@
 #ifndef FIRE_LAYER_H
 #define FIRE_LAYER_H
 
-#include "Core.h"
-#include "Event/Event.h"
+#include "Common.h"
+#include "Core/Trait/OnEventTrait.h"
+#include "Core/Trait/OnUpdateTrait.h"
 
 namespace FIRE {
 
-// ReSharper disable once CppClassCanBeFinal
-class FIRE_API Layer {
+class FIRE_API Layer : public OnEventTrait, OnUpdateTrait {
 public:
-  virtual ~Layer() FIRE_NOEXCEPT = default;
-  virtual void OnAttach() FIRE_NOEXCEPT;
-  virtual void OnDetach() FIRE_NOEXCEPT;
-  virtual void OnUpdate() FIRE_NOEXCEPT;
-  virtual void OnEvent(const Event& event) FIRE_NOEXCEPT;
+  FireResult OnEvent(const Ref<Event> &event) FIRE_NOEXCEPT FIRE_OVERRIDE;
+
+public:
+  void OnUpdate() FIRE_NOEXCEPT FIRE_OVERRIDE;
+  
+public:
+  ~Layer() FIRE_NOEXCEPT FIRE_OVERRIDE = default;
+  virtual void OnAttach() FIRE_NOEXCEPT = 0;
+  virtual void OnDetach() FIRE_NOEXCEPT = 0;
 
 #ifndef NDEBUG
-public:
+protected:
   const String name;
-  explicit Layer(const String& name = "Layer") FIRE_NOEXCEPT : name(name) {} 
-  FIRE_CONSTEXPR const String& GetName() const FIRE_NOEXCEPT { return name; }
+  explicit Layer(const String& name = "Layer") FIRE_NOEXCEPT;
+public:
+  FIRE_CONSTEXPR const String& GetName() const FIRE_NOEXCEPT;
 #endif
 };
 

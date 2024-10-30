@@ -2,40 +2,33 @@ ADD_SUBDIRECTORY(External)
 
 SET(FIRE_COMPILE_DEFINITIONS)
 
-# platform
+# Detect Platform
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
   LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_PLATFORM_LINUX)
 ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
   LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_PLATFORM_WINDOWS)
+ELSE()
+  MESSAGE(FATAL_ERROR "FATAL: UnSupported Platform")
 ENDIF ()
 
-# compiler
-# TODO
+# Detect Compiler
+IF(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_COMPILER_GNU)
+ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_COMPILER_MSVC)
+ELSE()
+  MESSAGE(FATAL_ERROR "FATAL: UnSupported Compiler")
+ENDIF()
 
-OPTION(FIRE_USE_SDL2_WINDOW "fire use sdl2 window" ON)
-OPTION(FIRE_USE_GLFW_WINDOW "fire use glfw window" OFF)
-OPTION(FIRE_USE_VULKAN_RENDER "fire use vulkan render" OFF)
-OPTION(FIRE_USE_VOLK_LOADER "fire use volk loader" OFF)
-OPTION(FIRE_USE_OPENGL_RENDER "fire use opengl render" OFF)
-OPTION(FIRE_USE_GLAD_LOADER "fire use glad loader" OFF)
 
-IF (FIRE_USE_SDL2_WINDOW)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_SDL2_WINDOW)
+OPTION(FIRE_USE_SDL3_WINDOW "Use Sdl3 Window" ON)
+OPTION(FIRE_USE_VULKAN_HRI "Use Vulkan HRI" ON)
+
+IF (FIRE_USE_SDL3_WINDOW)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_SDL3_WINDOW)
 ENDIF()
-IF (FIRE_USE_GLFW_WINDOW)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_GLFW_WINDOW)
-ENDIF()
-IF (FIRE_USE_VULKAN_RENDER)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VULKAN_RENDER)
-ENDIF()
-IF (FIRE_USE_VOLK_LOADER)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VOLK_LOADER)
-ENDIF()
-IF (FIRE_USE_OPENGL_RENDER)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_OPENGL_RENDER)
-ENDIF()
-IF (FIRE_USE_GLAD_LOADER)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_GLAD_LOADER)
+IF (FIRE_USE_VULKAN_HRI)
+  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VULKAN_HRI)
 ENDIF()
 
 LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_SHARED_LIBRARY)
@@ -62,35 +55,38 @@ PUBLIC
 
 TARGET_SOURCES(Fire
 PUBLIC
-  Core.h
-  Logger.h
-  Logger.cpp
-  Application.h
-  Application.cpp
+  Common.h
+  Core/Logger.h
+  Core/Logger.cpp
+  Core/Trait/OnEventTrait.h
+  Core/Trait/OnUpdateTrait.h
   Event/Event.h
   Event/Event.cpp
   Event/WindowEvent.h
   Event/WindowEvent.cpp
   Window/Window.h
   Window/Window.cpp
+  Window/Backend/SDL3Window.h
+  Window/Backend/SDL3Window.cpp
+  HRI/Vulkan/VulkanContext.h
+  HRI/Vulkan/VulkanContext.cpp
   Layer/Layer.h
   Layer/Layer.cpp
-  Window/Backend/SDL2Window.h
-  Window/Backend/SDL2Window.cpp
-  Window/Backend/GLFWWindow.h
-  Window/Backend/GLFWWindow.cpp
-#  Render/Render.h
-#  Render/Render.cpp
-#  Render/VulkanRender.h
-#  Render/VulkanRender.cpp
+  Layer/LayerStack.h
+  Layer/LayerStack.cpp
+  Layer/ImGuiLayer.h
+  Layer/ImGuiLayer.cpp
+  Core/Application.h
+  Core/Application.cpp
 )
 
 TARGET_LINK_LIBRARIES(Fire
 PUBLIC
   spdlog::spdlog
-  SDL2::SDL2main
-  SDL2::SDL2-static
-  glfw
-#  volk::volk
-#  GPUOpen::VulkanMemoryAllocator
+  SDL3::SDL3-static
+  vulkan
+  GPUOpen::VulkanMemoryAllocator
+  imgui
+  glm
+  eigen
 )

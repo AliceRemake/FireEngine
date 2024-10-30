@@ -1,3 +1,4 @@
+# Github Default
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -10,8 +11,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
-cmake-*
-Dist-*
+# CMake Output
+Build
+Dist
+# IDEs
 .vs
 .idea
 .vscode

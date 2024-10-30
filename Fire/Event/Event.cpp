@@ -14,6 +14,4 @@
 
 namespace FIRE {
 
-Event::Event(const EventKind kind) FIRE_NOEXCEPT : kind(kind) {}
-
 }
