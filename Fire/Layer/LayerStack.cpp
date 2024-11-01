@@ -23,8 +23,13 @@ LayerStack::~LayerStack() FIRE_NOEXCEPT {
   }
 }
 
-FIRE_NODISCARD Application& LayerStack::GetApplication() const FIRE_NOEXCEPT {
-  return application;
+FIRE_NODISCARD Vector<vk::Fence> LayerStack::CollectFences() const FIRE_NOEXCEPT {
+  Vector<vk::Fence> fences;
+  fences.reserve(top);
+  for (uint32_t i = 0; i < top; ++i) {
+    fences.emplace_back(layer_stack[i]->GetFence());
+  }
+  return fences;
 }
 
 void LayerStack::Push(Layer* layer) FIRE_NOEXCEPT {

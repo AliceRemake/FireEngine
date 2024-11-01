@@ -148,16 +148,19 @@ VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) 
 
   const Vector<uint32_t> queue_families = {graphics_family.value()};
 
-  Vector<vk::DeviceQueueCreateInfo> device_queue_create_infos(queue_families.size());
+  Vector<vk::DeviceQueueCreateInfo> device_queue_create_infos;
+  device_queue_create_infos.reserve(queue_families.size());
 
   const float priorities[] = { 0.0f };
   for (uint32_t i = 0; i < queue_families.size(); ++i) {
-    device_queue_create_infos[i] = vk::DeviceQueueCreateInfo(
-      vk::DeviceQueueCreateFlags(0),
-      queue_families[i],
-      1,
-      priorities,
-      nullptr
+    device_queue_create_infos.emplace_back(
+      vk::DeviceQueueCreateInfo(
+        vk::DeviceQueueCreateFlags(0),
+        queue_families[i],
+        1,
+        priorities,
+        nullptr
+      )
     );
   }
 

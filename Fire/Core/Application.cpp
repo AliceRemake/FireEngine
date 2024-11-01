@@ -21,8 +21,7 @@ Application::Application() FIRE_NOEXCEPT {
   window         = CreateUni<SDL3Window>("Fire Engine", 1280, 720);
   vulkan_context = CreateUni<HRI::VulkanContext>(window.get());
   layer_stack    = CreateUni<LayerStack>(*this);
-  image_ready.resize(MAX_FRAME_IN_FLIGHT);
-  image_finish.resize(MAX_FRAME_IN_FLIGHT);
+  
   for (uint32_t i = 0; i < MAX_FRAME_IN_FLIGHT; ++i) {
     image_ready[i] = vulkan_context->GetDevice().createSemaphore(vk::SemaphoreCreateInfo());
     image_finish[i] = vulkan_context->GetDevice().createSemaphore(vk::SemaphoreCreateInfo());
@@ -30,7 +29,23 @@ Application::Application() FIRE_NOEXCEPT {
 }
 
 void Application::OnUpdate() FIRE_NOEXCEPT {
+  // FIXME: Test Best Way For Watting Fences
+  const Vector<vk::Fence> fences = layer_stack->CollectFences();
+  if (const vk::Result result = vulkan_context->GetDevice().waitForFences(
+    fences, vk::True, UINT64_MAX
+  ); result == vk::Result::eSuccess) {
+      vulkan_context->GetDevice().resetFences(fences);
+  } else if (result == vk::Result::eTimeout) {
+    return;
+  } else {
+    FIRE_CRITICAL("Can Not Wait For Fence: {}", static_cast<size_t>(result));
+    FIRE_EXIT_FAILURE();
+  }
+
+  if (NextImage() == FIRE_FAILURE) { return; }
+  
   layer_stack->OnUpdate();
+
   if (!resized && present) {
     VkSemaphore wait_semaphore = image_finish[frame];
     VkSwapchainKHR swap_chain = vulkan_context->GetSwapChain();

@@ -33,8 +33,8 @@ protected:
   Uni<SDL3Window>         window         = nullptr;
   Uni<LayerStack>         layer_stack    = nullptr;
   Uni<HRI::VulkanContext> vulkan_context = nullptr;
-  Vector<vk::Semaphore>   image_ready    = {};
-  Vector<vk::Semaphore>   image_finish   = {};
+  vk::Semaphore           image_ready[MAX_FRAME_IN_FLIGHT]  = {};
+  vk::Semaphore           image_finish[MAX_FRAME_IN_FLIGHT] = {};
   
 protected:
   Application() FIRE_NOEXCEPT;
@@ -45,8 +45,8 @@ public:
   FIRE_NODISCARD bool Resized()  const FIRE_NOEXCEPT { return resized; }
   FIRE_NODISCARD bool Present()  const FIRE_NOEXCEPT { return present; }
 
-  FIRE_NODISCARD uint32_t            GetFrame()         const FIRE_NOEXCEPT { return frame; }
-  FIRE_NODISCARD uint32_t            GetImage()         const FIRE_NOEXCEPT { return image; }
+  FIRE_NODISCARD FIRE_CONSTEXPR uint32_t GetFrame() const FIRE_NOEXCEPT { return frame; }
+  FIRE_NODISCARD FIRE_CONSTEXPR uint32_t GetImage() const FIRE_NOEXCEPT { return image; }
   FIRE_NODISCARD SDL3Window&         GetWindow()        const FIRE_NOEXCEPT { return *window; }
   FIRE_NODISCARD LayerStack&         GetLayerStack()    const FIRE_NOEXCEPT { return *layer_stack; }
   FIRE_NODISCARD HRI::VulkanContext& GetVulkanContext() const FIRE_NOEXCEPT { return *vulkan_context; }

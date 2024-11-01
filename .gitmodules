@@ -17,3 +17,6 @@
 [submodule "Fire/External/eigen"]
 	path = Fire/External/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "Fire/External/tinygltf"]
+	path = Fire/External/tinygltf
+	url = https://github.com/syoyo/tinygltf.git

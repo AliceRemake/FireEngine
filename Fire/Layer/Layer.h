@@ -21,18 +21,20 @@ namespace FIRE {
 class FIRE_API Layer {
 protected:
   LayerStack& layer_stack;
-  Vector<vk::Fence> fences;
+  vk::Fence fences[Application::MAX_FRAME_IN_FLIGHT] = {};
   
 public:
   explicit Layer(LayerStack& layer_stack) FIRE_NOEXCEPT;
   virtual ~Layer() FIRE_NOEXCEPT = default;
-  FIRE_NODISCARD LayerStack&       GetLayerStack()           const FIRE_NOEXCEPT;
-  FIRE_NODISCARD const vk::Fence&  GetFence()                const FIRE_NOEXCEPT;
-  virtual void                     OnUpdate()                      FIRE_NOEXCEPT;
-  virtual FireResult               OnEvent(SDL_Event* event)       FIRE_NOEXCEPT;
-  virtual void                     OnResize()                      FIRE_NOEXCEPT;
-  virtual void                     OnAttach()                      FIRE_NOEXCEPT = 0;
-  virtual void                     OnDetach()                      FIRE_NOEXCEPT = 0;
+
+  FIRE_NODISCARD LayerStack& GetLayerStack() const FIRE_NOEXCEPT { return layer_stack; }
+  FIRE_NODISCARD vk::Fence&  GetFence()            FIRE_NOEXCEPT { return fences[layer_stack.GetApplication().GetFrame()]; }
+  
+  virtual void       OnUpdate()                FIRE_NOEXCEPT;
+  virtual FireResult OnEvent(SDL_Event* event) FIRE_NOEXCEPT;
+  virtual void       OnResize()                FIRE_NOEXCEPT;
+  virtual void       OnAttach()                FIRE_NOEXCEPT = 0;
+  virtual void       OnDetach()                FIRE_NOEXCEPT = 0;
   
 #ifndef NDEBUG
 protected:

@@ -30,13 +30,16 @@ public:
   explicit LayerStack(Application& application) FIRE_NOEXCEPT;
   ~LayerStack() FIRE_NOEXCEPT;
   
-  FIRE_NODISCARD Application& GetApplication() const FIRE_NOEXCEPT;
-  void           Push(Layer* layer)                  FIRE_NOEXCEPT;
-  Layer*         Pop()                               FIRE_NOEXCEPT;
-  void           OnUpdate()                    const FIRE_NOEXCEPT;
-  FireResult     OnEvent(SDL_Event* event)     const FIRE_NOEXCEPT;
-  void           OnResize()                    const FIRE_NOEXCEPT;
-
+  FIRE_NODISCARD Application& GetApplication() const FIRE_NOEXCEPT { return application; }
+  FIRE_NODISCARD uint32_t     Size()           const FIRE_NOEXCEPT { return top; }
+  FIRE_NODISCARD Vector<vk::Fence> CollectFences() const FIRE_NOEXCEPT;
+  
+  void       Push(Layer* layer)              FIRE_NOEXCEPT;
+  Layer*     Pop()                           FIRE_NOEXCEPT;
+  void       OnUpdate()                const FIRE_NOEXCEPT;
+  FireResult OnEvent(SDL_Event* event) const FIRE_NOEXCEPT;
+  void       OnResize()                const FIRE_NOEXCEPT;
+  
 };
 
 }

@@ -55,36 +55,11 @@ void ImGuiLayer::OnUpdate() FIRE_NOEXCEPT {
   ImGui::Render();
   ImDrawData* draw_data = ImGui::GetDrawData();
 
-  if (const vk::Result result = VC.GetDevice().waitForFences(
-    { GetFence() }, vk::True, 0
-  ); result == vk::Result::eSuccess) {
-    VC.GetDevice().resetFences({ GetFence() });
-  } else if (result == vk::Result::eTimeout) {
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
-    }
-    return;
-  } else {
-    FIRE_CRITICAL("Can Not Wait For Fence: {}", static_cast<size_t>(result));
-    FIRE_EXIT_FAILURE();
-  }
-
-  if (APP.NextImage() == FIRE_FAILURE) {
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
-    }
-    return;
-  }
-
   const vk::CommandBuffer& CB = command_buffers[APP.GetFrame()];
   const vk::Framebuffer& FB = frame_buffers[APP.GetImage()];
   
   CB.reset(vk::CommandBufferResetFlags(0));
-  CB.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlags(0)));
+  CB.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
   vk::ClearValue clear_value = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
   

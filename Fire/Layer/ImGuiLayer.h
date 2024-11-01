@@ -29,6 +29,7 @@ private:
 public:
   explicit ImGuiLayer(LayerStack& layer_stack) FIRE_NOEXCEPT;
   ~ImGuiLayer() FIRE_NOEXCEPT FIRE_OVERRIDE = default;
+  
   void       OnUpdate()                FIRE_NOEXCEPT FIRE_OVERRIDE;
   FireResult OnEvent(SDL_Event* event) FIRE_NOEXCEPT FIRE_OVERRIDE;
   void       OnResize()                FIRE_NOEXCEPT FIRE_OVERRIDE;
@@ -38,7 +39,6 @@ public:
 protected:
   virtual vk::DescriptorPool CreateDescriptorPool(HRI::VulkanContext& VC) FIRE_NOEXCEPT;
   virtual vk::RenderPass     CreateRenderPass(HRI::VulkanContext& VC)     FIRE_NOEXCEPT;
-  // virtual vk::RenderPass     ReCreateRenderPass(HRI::VulkanContext& VC)   FIRE_NOEXCEPT;
   virtual void               SetUpStyle()                                 FIRE_NOEXCEPT;
   virtual void               SetUpLayout()                                FIRE_NOEXCEPT;
 };
