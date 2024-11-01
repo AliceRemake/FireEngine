@@ -23,32 +23,37 @@ static VkBool32 VKAPI_PTR debugCallback(
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
   void*                                       pUserData
 );
+
 #endif
 
-VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) {
-  FIRE_CONSTEXPR vk::ApplicationInfo application_info(
-    "Fire Engin",
-    vk::makeApiVersion(0, 0,0,0),
-    "Fire Engin",
-    vk::makeApiVersion(0,0,0,0),
-    VK_API_VERSION_1_3,
-    nullptr
-  );
-
-  #ifndef NDEBUG
-  FIRE_CONSTEXPR const char* instance_layers[] = {
-    "VK_LAYER_KHRONOS_validation"
+VulkanContext::VulkanContext(const Ref<SDL3Window>& window) FIRE_NOEXCEPT : window(window) {
+  FIRE_CONSTEXPR VkApplicationInfo application_info {
+    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+    .pNext = nullptr,
+    .pApplicationName = nullptr,
+    .applicationVersion = 0,
+    .pEngineName = nullptr,
+    .engineVersion = 0,
+    .apiVersion = VK_API_VERSION_1_3,
   };
+
+  #ifdef NDEBUG
+  FIRE_CONSTEXPR uint32_t instance_layers_count = 0;
+  FIRE_CONSTEXPR const char* instance_layers[] = nullptr;
+  #else
+  FIRE_CONSTEXPR uint32_t instance_layers_count = 1;
+  FIRE_CONSTEXPR const char* instance_layers[] = { "VK_LAYER_KHRONOS_validation" };
   #endif
   
   #ifdef NDEBUG
-  uint32_t instance_extensions_count = 0;
-  const char* const* instance_extensions =
-    SDL_Vulkan_GetInstanceExtensions(&instance_extensions_count);
+  uint32_t sdl3_instance_extensions_count = 0;
+  char const* const* sdl3_instance_extensions = SDL_Vulkan_GetInstanceExtensions(&sdl3_instance_extensions_count);
+  Vector<const char*> instance_extensions;
+  instance_extensions.reserve(sdl3_instance_extensions_count);
+  instance_extensions.assign(sdl3_instance_extensions, sdl3_instance_extensions + sdl3_instance_extensions_count);
   #else
   uint32_t sdl3_instance_extensions_count = 0;
-  const char* const* sdl3_instance_extensions =
-    SDL_Vulkan_GetInstanceExtensions(&sdl3_instance_extensions_count);
+  char const* const* sdl3_instance_extensions = SDL_Vulkan_GetInstanceExtensions(&sdl3_instance_extensions_count);
   Vector<const char*> instance_extensions;
   instance_extensions.reserve(sdl3_instance_extensions_count + 1);
   instance_extensions.assign(sdl3_instance_extensions, sdl3_instance_extensions + sdl3_instance_extensions_count);
@@ -56,255 +61,382 @@ VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) 
   #endif
 
   #ifndef NDEBUG
-  FIRE_CONSTEXPR vk::DebugUtilsMessengerCreateInfoEXT messenger_create_info(
-    vk::DebugUtilsMessengerCreateFlagsEXT(0),
-    vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose
-    | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
-    | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
-    | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
-    vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
-    | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
-    | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
-    debugCallback,
-    nullptr,
-    nullptr
-  );
+  FIRE_CONSTEXPR VkDebugUtilsMessengerCreateInfoEXT messenger_create_info{
+    .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+    .pNext = nullptr,
+    .flags = 0,
+    .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+    .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+    .pfnUserCallback = debugCallback,
+    .pUserData = nullptr,
+  };
   #endif
-  
-  instance = vk::createInstance(
-    vk::InstanceCreateInfo(
-      vk::InstanceCreateFlags(0),
-      &application_info,
-      #ifdef NDEBUG
-      0, nullptr,
-      #else
-      std::size(instance_layers),
-      instance_layers,
-      #endif
-      #ifdef NDEBUG
-      instance_extensions_count,
-      instance_extensions,
-      nullptr
-      #else
-      instance_extensions.size(),
-      instance_extensions.data(),
-      &messenger_create_info
-      #endif
-    )
-  );
 
-  loader = CreateUni<vk::DispatchLoaderDynamic>(instance, vkGetInstanceProcAddr);
+  const VkInstanceCreateInfo instance_create_info {
+    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+    #ifdef NDEBUG
+    .pNext = nullptr,
+    #else
+    .pNext = &messenger_create_info,
+    #endif
+    .flags = 0,
+    .pApplicationInfo = &application_info,
+    .enabledLayerCount = instance_layers_count,
+    .ppEnabledLayerNames = instance_layers,
+    .enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size()),
+    .ppEnabledExtensionNames = instance_extensions.data(),
+  };
+
+  {
+    const VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
+    FIRE_CHECK_VK(result);
+  }
   
   #ifndef NDEBUG
-  messenger = instance.createDebugUtilsMessengerEXT(messenger_create_info, nullptr, *loader);
+  {
+    const auto f = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+    if (f == nullptr) { FIRE_EXIT_FAILURE(); }
+    const VkResult result = f(instance, &messenger_create_info, nullptr, &messenger);
+    FIRE_CHECK_VK(result);
+  }
   #endif
 
-  SDL_Vulkan_CreateSurface(
-    window->GetNative(),
-    instance,
-    nullptr,
-    reinterpret_cast<VkSurfaceKHR*>(&surface)
-  );
-
-  const Vector<vk::PhysicalDevice> physical_devices = instance.enumeratePhysicalDevices();
-
-  for (uint32_t i = 0; i < physical_devices.size(); ++i) {
-    if (physical_devices[i].getProperties().deviceType != vk::PhysicalDeviceType::eDiscreteGpu) {
-      continue;
-    }
-    if (physical_devices[i].getProperties().apiVersion < VK_API_VERSION_1_3) {
-      continue;
-    }
-
-    const Vector<vk::QueueFamilyProperties> properties = physical_devices[i].getQueueFamilyProperties();
-    for (uint32_t j = 0; j < properties.size(); ++j) {
-      if (properties[j].queueCount <= 0) {
-        continue;
-      }
-      vk::Bool32 support = vk::False;
-      if (physical_devices[i].getSurfaceSupportKHR(j, surface, &support) != vk::Result::eSuccess) {
-        FIRE_WARN("Can Not Get Physical Device Surface Support Info");
-        continue;
-      }
-      if (support != vk::True) {
-        continue;
-      }
-      if (!(properties[j].queueFlags & vk::QueueFlagBits::eGraphics)) {
-        continue;
-      }
-      if (!(properties[j].queueFlags & vk::QueueFlagBits::eTransfer)) {
-        continue;
-      }
-      graphics_family = transfer_family = j;
-      physical_device = physical_devices[i];
-      break;
-    }
+  if (!SDL_Vulkan_CreateSurface(window->GetNative(), instance,nullptr, &surface)) {
+    FIRE_CRITICAL("{}", SDL_GetError());
+    FIRE_EXIT_FAILURE();
   }
 
-  if (!graphics_family.has_value() || !transfer_family.has_value()) {
+  uint32_t physical_device_count = 0;
+  {
+    const VkResult result = vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr);
+    FIRE_CHECK_VK(result);
+  }
+  Vector<VkPhysicalDevice> physical_devices(physical_device_count);
+  {
+    const VkResult result = vkEnumeratePhysicalDevices(instance, &physical_device_count, physical_devices.data());
+    FIRE_CHECK_VK(result);
+  }
+
+  for (uint32_t i = 0; i < physical_devices.size(); ++i) {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_devices[i], &properties);
+    if (properties.apiVersion < VK_API_VERSION_1_3) { continue; }
+    if (properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) { continue; }
+
+    uint32_t queue_family_property_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_devices[i], &queue_family_property_count, nullptr);
+    Vector<VkQueueFamilyProperties> queue_family_properties(queue_family_property_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_devices[i], &queue_family_property_count, queue_family_properties.data());
+
+    bool found = false;
+    for (uint32_t j = 0; j < queue_family_properties.size(); ++j) {
+      if (queue_family_properties[j].queueCount <= 0) { continue; }
+
+      VkBool32 support = VK_FALSE;
+      vkGetPhysicalDeviceSurfaceSupportKHR(physical_devices[i], j, surface, &support);
+      if (support == VK_FALSE) { continue; }
+      
+      if (!(queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)) { continue; }
+
+      graphics_family = j;
+      found = true;
+      break;
+    }
+    if (!found) continue;
+
+    found = false;
+    for (uint32_t j = 0; j < queue_family_properties.size(); ++j) {
+      if (queue_family_properties[j].queueCount <= 0) { continue; }
+      
+      if (!(queue_family_properties[j].queueFlags & VK_QUEUE_TRANSFER_BIT)) { continue; }
+
+      transfer_family = j;
+      found = true;
+      break;
+    }
+    if (!found) continue;
+
+    physical_device = physical_devices[i];
+    break;
+  }
+
+  if (physical_device == VK_NULL_HANDLE) {
     FIRE_CRITICAL("Can Not Find Suitable Physical Device");
     FIRE_EXIT_FAILURE();
   }
 
-  const Vector<uint32_t> queue_families = {graphics_family.value()};
+  const Vector<uint32_t> queue_families = RemoveDuplicate(Vector{ graphics_family, transfer_family });
 
-  Vector<vk::DeviceQueueCreateInfo> device_queue_create_infos;
+  Vector<VkDeviceQueueCreateInfo> device_queue_create_infos;
   device_queue_create_infos.reserve(queue_families.size());
 
   const float priorities[] = { 0.0f };
+  VkDeviceQueueCreateInfo device_queue_create_info {
+    .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+    .pNext = nullptr,
+    .flags = 0,
+    .queueFamilyIndex = 0,
+    .queueCount = 1,
+    .pQueuePriorities = priorities,
+  };
   for (uint32_t i = 0; i < queue_families.size(); ++i) {
-    device_queue_create_infos.emplace_back(
-      vk::DeviceQueueCreateInfo(
-        vk::DeviceQueueCreateFlags(0),
-        queue_families[i],
-        1,
-        priorities,
-        nullptr
-      )
-    );
+    device_queue_create_info.queueFamilyIndex = queue_families[i];
+    device_queue_create_infos.emplace_back(device_queue_create_info);
   }
 
-  const char* device_layers[] = {};
-  const char* device_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+  FIRE_CONSTEXPR uint32_t device_layer_count = 0;
+  FIRE_CONSTEXPR char* device_layers[] = {};
+  FIRE_CONSTEXPR uint32_t device_extension_count = 1;
+  FIRE_CONSTEXPR char const* device_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-  FIRE_UNUSE(device_layers);
+  VkPhysicalDeviceFeatures features{};
   
-  const vk::DeviceCreateInfo device_create_info(
-    vk::DeviceCreateFlags(0),
-    device_queue_create_infos.size(),
-    device_queue_create_infos.data(),
-    0,
-    nullptr,
-    std::size(device_extensions),
-    device_extensions
-  );
-  
-  device = physical_device.createDevice(device_create_info);
+  const VkDeviceCreateInfo device_create_info {
+    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+    .pNext = nullptr,
+    .flags = 0,
+    .queueCreateInfoCount = static_cast<uint32_t>(device_queue_create_infos.size()),
+    .pQueueCreateInfos = device_queue_create_infos.data(),
+    .enabledLayerCount = device_layer_count,
+    .ppEnabledLayerNames = device_layers,
+    .enabledExtensionCount = device_extension_count,
+    .ppEnabledExtensionNames = device_extensions,
+    .pEnabledFeatures = &features,
+  };
 
-  vk::SurfaceCapabilitiesKHR capabilities = physical_device.getSurfaceCapabilitiesKHR(surface);
+  {
+    const VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
+    FIRE_CHECK_VK(result);
+  }
+
+  vkGetDeviceQueue(device, graphics_family, 0, &graphics_queue);
+  vkGetDeviceQueue(device, transfer_family, 0, &transfer_queue);
+  
+  VkSurfaceCapabilitiesKHR capabilities{};
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+    FIRE_CHECK_VK(result);
+  }
   
   image_count = std::min(capabilities.minImageCount + 1, capabilities.maxImageCount);
   
   image_extent = capabilities.currentExtent;
 
-  surface_format = physical_device.getSurfaceFormatsKHR(surface)[0];
+  surface_format = VulkanContext::ChooseSurfaceFormat();
 
-  present_mode = physical_device.getSurfacePresentModesKHR(surface)[0];
-  
-  vk::SwapchainCreateInfoKHR swap_chain_create_info(
-    vk::SwapchainCreateFlagsKHR(0),
-    surface,
-    image_count,
-    surface_format.format,
-    surface_format.colorSpace,
-    image_extent,
-    1,
-    vk::ImageUsageFlagBits::eColorAttachment,
-    vk::SharingMode::eExclusive,
-    queue_families.size(),
-    queue_families.data(),
-    physical_device.getSurfaceCapabilitiesKHR(surface).currentTransform,
-    vk::CompositeAlphaFlagBitsKHR::eOpaque,
-    present_mode,
-    vk::True,
-    VK_NULL_HANDLE,
-    nullptr
-  );
-  
-  swap_chain = device.createSwapchainKHR(swap_chain_create_info);
-  
-  images = device.getSwapchainImagesKHR(swap_chain);
+  present_mode = VulkanContext::ChoosePresentMode();
 
+  const VkSwapchainCreateInfoKHR swap_chain_create_info {
+    .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+    .pNext = nullptr,
+    .flags = 0,
+    .surface = surface,
+    .minImageCount = image_count,
+    .imageFormat = surface_format.format,
+    .imageColorSpace = surface_format.colorSpace,
+    .imageExtent = image_extent,
+    .imageArrayLayers = 1,
+    .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    .imageSharingMode =  queue_families.size() == 1 ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT,
+    .queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size()),
+    .pQueueFamilyIndices = queue_families.data(),
+    .preTransform = capabilities.currentTransform,
+    .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+    .presentMode = present_mode,
+    .clipped = VK_TRUE,
+    .oldSwapchain = VK_NULL_HANDLE,
+  };
+
+  {
+    const VkResult result = vkCreateSwapchainKHR(device, &swap_chain_create_info, nullptr, &swap_chain);
+    FIRE_CHECK_VK(result);
+  }
+  
+  vkGetSwapchainImagesKHR(device, swap_chain, &image_count, nullptr);
+  images.resize(image_count);
+  vkGetSwapchainImagesKHR(device, swap_chain, &image_count, images.data());
+  
   image_views.resize(images.size());
+
+  VkImageViewCreateInfo image_view_create_info {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+    .pNext = nullptr,
+    .flags = 0,
+    .image = VK_NULL_HANDLE,
+    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+    .format = surface_format.format,
+    .components = {
+      .r = VK_COMPONENT_SWIZZLE_R,
+      .g = VK_COMPONENT_SWIZZLE_G,
+      .b = VK_COMPONENT_SWIZZLE_B,
+      .a = VK_COMPONENT_SWIZZLE_A,
+    },
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    },
+  };
   
   for (uint32_t i = 0; i < images.size(); ++i) {
-    image_views[i] = device.createImageView(
-      vk::ImageViewCreateInfo(
-        vk::ImageViewCreateFlags(0),
-        images[i],
-        vk::ImageViewType::e2D,
-        surface_format.format,
-        vk::ComponentMapping(
-          vk::ComponentSwizzle::eR,
-          vk::ComponentSwizzle::eG,
-          vk::ComponentSwizzle::eB,
-          vk::ComponentSwizzle::eA
-        ),
-        vk::ImageSubresourceRange(
-          vk::ImageAspectFlagBits::eColor,
-          0,1,0,1
-        ),
-        nullptr
-      )
-    );
+    image_view_create_info.image = images[i];
+    {
+      const VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &image_views[i]);
+      FIRE_CHECK_VK(result);
+    }
   }
 }
 
-VulkanContext::~VulkanContext() FIRE_NOEXCEPT {}
+VulkanContext::~VulkanContext() FIRE_NOEXCEPT {
+  for (uint32_t i = 0; i < image_views.size(); ++i) {
+    vkDestroyImageView(device, image_views[i], nullptr);
+  }
+  vkDestroySwapchainKHR(device, swap_chain, nullptr);
+  vkDestroyDevice(device, nullptr);
+  {
+    const auto f = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+    if (f == nullptr) { FIRE_EXIT_FAILURE(); }
+    f(instance, messenger, nullptr);
+  }
+  vkDestroyInstance(instance, nullptr);
+}
+
+VkPresentModeKHR VulkanContext::ChoosePresentMode(const Vector<VkPresentModeKHR>& desired_present_modes) const FIRE_NOEXCEPT {
+  uint32_t present_mode_count = 0;
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_mode_count, nullptr);
+    FIRE_CHECK_VK(result);
+  }
+  Vector<VkPresentModeKHR> present_modes(present_mode_count);
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_mode_count, present_modes.data());
+    FIRE_CHECK_VK(result);
+  }
+  
+  for (size_t i = 0; i < desired_present_modes.size(); ++i) {
+    for (size_t j = 0; j < present_modes.size(); ++j) {
+      if (desired_present_modes[i] == present_modes[j]) {
+        return desired_present_modes[i];
+      }
+    }
+  }
+  
+  return present_modes[0];
+}
+
+VkSurfaceFormatKHR VulkanContext::ChooseSurfaceFormat(const Vector<VkSurfaceFormatKHR>& desired_surface_formats) const FIRE_NOEXCEPT {
+  uint32_t surface_format_count = 0;
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &surface_format_count, nullptr);
+    FIRE_CHECK_VK(result);
+  }
+  Vector<VkSurfaceFormatKHR> surface_formats(surface_format_count);
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &surface_format_count, surface_formats.data());
+    FIRE_CHECK_VK(result);
+  }
+  
+  for (size_t i = 0; i < desired_surface_formats.size(); ++i) {
+    for (size_t j = 0; j < surface_formats.size(); ++j) {
+      if (desired_surface_formats[i].format == surface_formats[j].format
+        && desired_surface_formats[i].colorSpace == surface_formats[j].colorSpace) {
+        return desired_surface_formats[i];
+      }
+    }
+  }
+  
+  return surface_formats[0];
+}
 
 void VulkanContext::OnResize() FIRE_NOEXCEPT {
-  device.waitIdle();
-  
-  const vk::SurfaceCapabilitiesKHR capabilities = physical_device.getSurfaceCapabilitiesKHR(surface);
+  vkDeviceWaitIdle(device);
+
+  for (uint32_t i = 0; i < image_views.size(); ++i) {
+    vkDestroyImageView(device, image_views[i], nullptr);
+  }
+
+  const VkSwapchainKHR old_swap_chain = swap_chain;
+
+  VkSurfaceCapabilitiesKHR capabilities{};
+  {
+    const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+    FIRE_CHECK_VK(result);
+  }
   
   image_count = std::min(capabilities.minImageCount + 1, capabilities.maxImageCount);
   
   image_extent = capabilities.currentExtent;
 
-  const Vector<uint32_t> queue_families = {graphics_family.value()};
-  
-  const vk::SwapchainCreateInfoKHR swap_chain_create_info(
-    vk::SwapchainCreateFlagsKHR(0),
-    surface,
-    image_count,
-    surface_format.format,
-    surface_format.colorSpace,
-    image_extent,
-    1,
-    vk::ImageUsageFlagBits::eColorAttachment,
-    vk::SharingMode::eExclusive,
-    queue_families.size(),
-    queue_families.data(),
-    physical_device.getSurfaceCapabilitiesKHR(surface).currentTransform,
-    vk::CompositeAlphaFlagBitsKHR::eOpaque,
-    present_mode,
-    vk::True,
-    VK_NULL_HANDLE,
-    nullptr
-  );
+  surface_format = ChooseSurfaceFormat();
 
-  for (uint32_t i = 0; i < image_views.size(); ++i) {
-    device.destroyImageView(image_views[i]);
+  present_mode = ChoosePresentMode();
+
+  const Vector<uint32_t> queue_families = RemoveDuplicate(Vector{ graphics_family, transfer_family });
+
+  const VkSwapchainCreateInfoKHR swap_chain_create_info {
+    .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+    .pNext = nullptr,
+    .flags = 0,
+    .surface = surface,
+    .minImageCount = image_count,
+    .imageFormat = surface_format.format,
+    .imageColorSpace = surface_format.colorSpace,
+    .imageExtent = image_extent,
+    .imageArrayLayers = 1,
+    .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    .imageSharingMode =  queue_families.size() == 1 ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT,
+    .queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size()),
+    .pQueueFamilyIndices = queue_families.data(),
+    .preTransform = capabilities.currentTransform,
+    .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+    .presentMode = present_mode,
+    .clipped = VK_TRUE,
+    .oldSwapchain = old_swap_chain,
+  };
+
+  {
+    const VkResult result = vkCreateSwapchainKHR(device, &swap_chain_create_info, nullptr, &swap_chain);
+    FIRE_CHECK_VK(result);
   }
   
-  device.destroySwapchainKHR(swap_chain);
-  
-  swap_chain = device.createSwapchainKHR(swap_chain_create_info);
-  
-  images = device.getSwapchainImagesKHR(swap_chain);
+  vkDestroySwapchainKHR(device, old_swap_chain, nullptr);
 
+  vkGetSwapchainImagesKHR(device, swap_chain, &image_count, nullptr);
+  images.resize(image_count);
+  vkGetSwapchainImagesKHR(device, swap_chain, &image_count, images.data());
+  
   image_views.resize(images.size());
+
+  VkImageViewCreateInfo image_view_create_info {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+    .pNext = nullptr,
+    .flags = 0,
+    .image = VK_NULL_HANDLE,
+    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+    .format = surface_format.format,
+    .components = {
+      .r = VK_COMPONENT_SWIZZLE_R,
+      .g = VK_COMPONENT_SWIZZLE_G,
+      .b = VK_COMPONENT_SWIZZLE_B,
+      .a = VK_COMPONENT_SWIZZLE_A,
+    },
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    },
+  };
   
   for (uint32_t i = 0; i < images.size(); ++i) {
-    image_views[i] = device.createImageView(
-      vk::ImageViewCreateInfo(
-        vk::ImageViewCreateFlags(0),
-        images[i],
-        vk::ImageViewType::e2D,
-        surface_format.format,
-        vk::ComponentMapping(
-          vk::ComponentSwizzle::eR,
-          vk::ComponentSwizzle::eG,
-          vk::ComponentSwizzle::eB,
-          vk::ComponentSwizzle::eA
-        ),
-        vk::ImageSubresourceRange(
-          vk::ImageAspectFlagBits::eColor,
-          0,1,0,1
-        ),
-        nullptr
-      )
-    );
+    image_view_create_info.image = images[i];
+    {
+      const VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &image_views[i]);
+      FIRE_CHECK_VK(result);
+    }
   }
 }
 

@@ -15,7 +15,7 @@
 #define FIRE_COMMON_H
 
 /* Handle HRI */
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 /* Handle Window */
 #include <SDL3/SDL.h>
@@ -40,13 +40,13 @@
 
 /* Frequently Used Third Party Headers */
 #include <glm/glm.hpp>
-#include <Eigen/Core>
+#include <tiny_gltf.h>
 
 namespace FIRE {
 
 /* Handle Platform Different */
 #ifdef FIRE_PLATFORM_WINDOWS
-  #define FIRE_DEBUGBREAK() do { __debugbreak(); } while(0)
+  #define FIRE_DEBUGBREAK do { __debugbreak(); } while(0)
   #ifdef FIRE_SHARED_LIBRARY
     #define FIRE_API __declspec(dllexport)
   #else
@@ -103,11 +103,17 @@ namespace FIRE {
 #ifdef NDEBUG
   #define FIRE_ASSERT(exp)
 #else
-  #define FIRE_ASSERT(exp) do { if(!!(exp)); else FIRE_DEBUGBREAK(); } while (0)
+  #define FIRE_ASSERT(exp) do { if(!!(exp)); else FIRE_DEBUGBREAK; } while (0)
+#endif
+
+#ifdef NDEBUG
+  #define FIRE_CHECK_VK(res) FIRE_UNUSE(res == VK_SUCCESS)
+#else
+  #define FIRE_CHECK_VK(res) FIRE_ASSERT(res == VK_SUCCESS)
 #endif
 
 #define FIRE_EXIT_SUCCESS() do { exit(EXIT_SUCCESS); } while (0)
-#define FIRE_EXIT_FAILURE() do { exit(EXIT_FAILURE); FIRE_DEBUGBREAK(); } while (0)
+#define FIRE_EXIT_FAILURE() do { exit(EXIT_FAILURE); FIRE_DEBUGBREAK; } while (0)
   
 /* Unify Naming Style */
 using FireResult = uint32_t;
@@ -130,6 +136,8 @@ template<typename T, typename... Args>
 FIRE_CONSTEXPR Ref<T> CreateRef(Args&&... args) { return std::make_shared<T>(std::forward<Args>(args)...); }
 template<typename T, typename... Args>
 FIRE_CONSTEXPR Uni<T> CreateUni(Args&&... args) { return std::make_unique<T>(std::forward<Args>(args)...); }
+
+using Model = tinygltf::Model;
 
 ////////////////////////////////////////////LLVM-Style RTTI/////////////////////////////////////////////////////////////
 

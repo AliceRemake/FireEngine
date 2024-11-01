@@ -28,13 +28,14 @@ protected:
   bool                    done           = false;
   bool                    resized        = false;
   bool                    present        = false;
+  bool                    minimize       = false;
   uint32_t                frame          = 0;
   uint32_t                image          = 0;
-  Uni<SDL3Window>         window         = nullptr;
+  Ref<SDL3Window>         window         = nullptr;
   Uni<LayerStack>         layer_stack    = nullptr;
   Uni<HRI::VulkanContext> vulkan_context = nullptr;
-  vk::Semaphore           image_ready[MAX_FRAME_IN_FLIGHT]  = {};
-  vk::Semaphore           image_finish[MAX_FRAME_IN_FLIGHT] = {};
+  VkSemaphore             image_ready[MAX_FRAME_IN_FLIGHT]  = {};
+  VkSemaphore             image_finish[MAX_FRAME_IN_FLIGHT] = {};
   
 protected:
   Application() FIRE_NOEXCEPT;
@@ -44,20 +45,22 @@ public:
   FIRE_NODISCARD bool Done()const FIRE_NOEXCEPT { return done; }
   FIRE_NODISCARD bool Resized()  const FIRE_NOEXCEPT { return resized; }
   FIRE_NODISCARD bool Present()  const FIRE_NOEXCEPT { return present; }
+  FIRE_NODISCARD bool Minimize()  const FIRE_NOEXCEPT { return minimize; }
 
   FIRE_NODISCARD FIRE_CONSTEXPR uint32_t GetFrame() const FIRE_NOEXCEPT { return frame; }
   FIRE_NODISCARD FIRE_CONSTEXPR uint32_t GetImage() const FIRE_NOEXCEPT { return image; }
   FIRE_NODISCARD SDL3Window&         GetWindow()        const FIRE_NOEXCEPT { return *window; }
   FIRE_NODISCARD LayerStack&         GetLayerStack()    const FIRE_NOEXCEPT { return *layer_stack; }
   FIRE_NODISCARD HRI::VulkanContext& GetVulkanContext() const FIRE_NOEXCEPT { return *vulkan_context; }
-  FIRE_NODISCARD vk::Semaphore&      GetImageReady()          FIRE_NOEXCEPT { return image_ready[frame]; }
-  FIRE_NODISCARD vk::Semaphore&      GetImageFinish()         FIRE_NOEXCEPT { return image_finish[frame]; }
+  FIRE_NODISCARD VkSemaphore&        GetImageReady()          FIRE_NOEXCEPT { return image_ready[frame]; }
+  FIRE_NODISCARD VkSemaphore&        GetImageFinish()         FIRE_NOEXCEPT { return image_finish[frame]; }
   
-  void       SetDone(const bool b)    FIRE_NOEXCEPT { done = b; }
-  void       SetResized(const bool b) FIRE_NOEXCEPT { resized = b; }
-  void       SetPresent(const bool b) FIRE_NOEXCEPT { present = b; }
-  void       NextFrame()              FIRE_NOEXCEPT { frame = (frame + 1) % MAX_FRAME_IN_FLIGHT; }
-  FireResult NextImage()              FIRE_NOEXCEPT;
+  void       SetDone(const bool b)     FIRE_NOEXCEPT { done = b; }
+  void       SetResized(const bool b)  FIRE_NOEXCEPT { resized = b; }
+  void       SetPresent(const bool b)  FIRE_NOEXCEPT { present = b; }
+  void       SetMinimize(const bool b) FIRE_NOEXCEPT { minimize = b; }
+  void       NextFrame()               FIRE_NOEXCEPT { frame = (frame + 1) % MAX_FRAME_IN_FLIGHT; }
+  FireResult NextImage()               FIRE_NOEXCEPT;
   
   virtual void       OnUpdate()                FIRE_NOEXCEPT;
   virtual FireResult OnEvent(SDL_Event* event) FIRE_NOEXCEPT;

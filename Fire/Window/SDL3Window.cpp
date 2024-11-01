@@ -18,7 +18,8 @@ SDL3Window::SDL3Window(const char* title, const uint32_t width, const uint32_t h
 : title(title), width(width), height(height), window(nullptr) {
 
   window = SDL_CreateWindow(title, width, height,
-     SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN
+     SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY
+     // | SDL_WINDOW_HIDDEN
   );
   
   if (window == nullptr) {

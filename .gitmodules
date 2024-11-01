@@ -4,9 +4,6 @@
 [submodule "Fire/External/SDL3"]
 	path = Fire/External/SDL3
 	url = https://github.com/libsdl-org/SDL.git
-[submodule "Fire/External/vma"]
-	path = Fire/External/vma
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
 [submodule "Fire/External/imgui"]
 	path = Fire/External/imgui
 	url = https://github.com/ocornut/imgui.git
@@ -14,9 +11,9 @@
 [submodule "Fire/External/glm"]
 	path = Fire/External/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Fire/External/eigen"]
-	path = Fire/External/eigen
-	url = https://gitlab.com/libeigen/eigen.git
 [submodule "Fire/External/tinygltf"]
 	path = Fire/External/tinygltf
 	url = https://github.com/syoyo/tinygltf.git
+[submodule "Fire/External/stb"]
+	path = Fire/External/stb
+	url = https://github.com/nothings/stb.git

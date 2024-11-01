@@ -20,11 +20,11 @@ namespace FIRE {
 // ReSharper disable once CppClassCanBeFinal
 class FIRE_API ImGuiLayer : public Layer {
 private:
-  vk::DescriptorPool        descriptor_pool;
-  vk::RenderPass            render_pass;
-  vk::CommandPool           command_pool;
-  Vector<vk::CommandBuffer> command_buffers;
-  Vector<vk::Framebuffer>   frame_buffers;
+  VkDescriptorPool      descriptor_pool                                   = {};
+  VkRenderPass          render_pass                                       = {};
+  VkCommandPool         command_pool                                      = {};
+  VkCommandBuffer       command_buffers[Application::MAX_FRAME_IN_FLIGHT] = {};
+  Vector<VkFramebuffer> frame_buffers                                     = {};
 
 public:
   explicit ImGuiLayer(LayerStack& layer_stack) FIRE_NOEXCEPT;
@@ -37,10 +37,10 @@ public:
   void       OnDetach()                FIRE_NOEXCEPT FIRE_OVERRIDE;
 
 protected:
-  virtual vk::DescriptorPool CreateDescriptorPool(HRI::VulkanContext& VC) FIRE_NOEXCEPT;
-  virtual vk::RenderPass     CreateRenderPass(HRI::VulkanContext& VC)     FIRE_NOEXCEPT;
-  virtual void               SetUpStyle()                                 FIRE_NOEXCEPT;
-  virtual void               SetUpLayout()                                FIRE_NOEXCEPT;
+  virtual VkDescriptorPool CreateDescriptorPool(HRI::VulkanContext& VC) FIRE_NOEXCEPT;
+  virtual VkRenderPass     CreateRenderPass(HRI::VulkanContext& VC)     FIRE_NOEXCEPT;
+  virtual void             SetUpStyle()                                 FIRE_NOEXCEPT;
+  virtual void             SetUpLayout()                                FIRE_NOEXCEPT;
 };
 
 }

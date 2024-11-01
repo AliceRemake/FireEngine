@@ -28,8 +28,6 @@ public:
   SDL3Window(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
   ~SDL3Window() FIRE_NOEXCEPT;
   
-  // static Uni<SDL3Window> Create(const char* title, uint32_t width, uint32_t height) FIRE_NOEXCEPT;
-  
   FIRE_CONSTEXPR const char* GetTitle () const FIRE_NOEXCEPT { return title; }
   FIRE_CONSTEXPR uint32_t    GetWidth () const FIRE_NOEXCEPT { return width; }
   FIRE_CONSTEXPR uint32_t    GetHeight() const FIRE_NOEXCEPT { return height; }

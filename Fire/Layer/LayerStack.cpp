@@ -23,8 +23,8 @@ LayerStack::~LayerStack() FIRE_NOEXCEPT {
   }
 }
 
-FIRE_NODISCARD Vector<vk::Fence> LayerStack::CollectFences() const FIRE_NOEXCEPT {
-  Vector<vk::Fence> fences;
+FIRE_NODISCARD Vector<VkFence> LayerStack::CollectFences() const FIRE_NOEXCEPT {
+  Vector<VkFence> fences;
   fences.reserve(top);
   for (uint32_t i = 0; i < top; ++i) {
     fences.emplace_back(layer_stack[i]->GetFence());

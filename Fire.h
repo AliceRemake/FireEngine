@@ -19,6 +19,7 @@
 #include "Fire/Layer/Layer.h"
 #include "Fire/Layer/ImGuiLayer.h"
 #include "Fire/Core/Application.h"
+#include "Fire/Core/Loader.h"
 
 #include "Fire/Entry.h"
 

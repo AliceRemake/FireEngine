@@ -32,7 +32,7 @@ public:
   
   FIRE_NODISCARD Application& GetApplication() const FIRE_NOEXCEPT { return application; }
   FIRE_NODISCARD uint32_t     Size()           const FIRE_NOEXCEPT { return top; }
-  FIRE_NODISCARD Vector<vk::Fence> CollectFences() const FIRE_NOEXCEPT;
+  FIRE_NODISCARD Vector<VkFence> CollectFences() const FIRE_NOEXCEPT;
   
   void       Push(Layer* layer)              FIRE_NOEXCEPT;
   Layer*     Pop()                           FIRE_NOEXCEPT;

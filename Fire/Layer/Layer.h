@@ -21,14 +21,14 @@ namespace FIRE {
 class FIRE_API Layer {
 protected:
   LayerStack& layer_stack;
-  vk::Fence fences[Application::MAX_FRAME_IN_FLIGHT] = {};
+  VkFence     fences[Application::MAX_FRAME_IN_FLIGHT] = {};
   
 public:
   explicit Layer(LayerStack& layer_stack) FIRE_NOEXCEPT;
   virtual ~Layer() FIRE_NOEXCEPT = default;
 
   FIRE_NODISCARD LayerStack& GetLayerStack() const FIRE_NOEXCEPT { return layer_stack; }
-  FIRE_NODISCARD vk::Fence&  GetFence()            FIRE_NOEXCEPT { return fences[layer_stack.GetApplication().GetFrame()]; }
+  FIRE_NODISCARD VkFence&    GetFence()            FIRE_NOEXCEPT { return fences[layer_stack.GetApplication().GetFrame()]; }
   
   virtual void       OnUpdate()                FIRE_NOEXCEPT;
   virtual FireResult OnEvent(SDL_Event* event) FIRE_NOEXCEPT;
