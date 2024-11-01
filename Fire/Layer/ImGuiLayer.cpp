@@ -19,7 +19,11 @@
 namespace FIRE {
 
 ImGuiLayer::ImGuiLayer(LayerStack& layer_stack) FIRE_NOEXCEPT
+#ifdef NDEBUG
+  : Layer(layer_stack) {}
+#else
   : Layer(layer_stack, "ImGui Layer") {}
+#endif
 
 vk::DescriptorPool ImGuiLayer::CreateDescriptorPool(HRI::VulkanContext& VC) FIRE_NOEXCEPT {
   FIRE_CONSTEXPR vk::DescriptorPoolSize descriptor_pool_sizes[] = {

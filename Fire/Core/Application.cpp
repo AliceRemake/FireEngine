@@ -75,7 +75,7 @@ void Application::OnResize() FIRE_NOEXCEPT {
 FireResult Application::NextImage() FIRE_NOEXCEPT {
   if (const vk::ResultValue<uint32_t> result = vulkan_context->GetDevice().acquireNextImageKHR(
     vulkan_context->GetSwapChain(),
-    0,
+    UINT64_MAX,
     { GetImageReady() },
     {}
   ); result.result == vk::Result::eSuccess || result.result == vk::Result::eSuboptimalKHR) {

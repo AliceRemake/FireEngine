@@ -35,12 +35,12 @@ VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) 
     nullptr
   );
 
+  #ifndef NDEBUG
   FIRE_CONSTEXPR const char* instance_layers[] = {
-    #ifndef NDEBUG
     "VK_LAYER_KHRONOS_validation"
-    #endif
   };
-
+  #endif
+  
   #ifdef NDEBUG
   uint32_t instance_extensions_count = 0;
   const char* const* instance_extensions =
@@ -54,7 +54,8 @@ VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) 
   instance_extensions.assign(sdl3_instance_extensions, sdl3_instance_extensions + sdl3_instance_extensions_count);
   instance_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   #endif
-  
+
+  #ifndef NDEBUG
   FIRE_CONSTEXPR vk::DebugUtilsMessengerCreateInfoEXT messenger_create_info(
     vk::DebugUtilsMessengerCreateFlagsEXT(0),
     vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose
@@ -68,13 +69,18 @@ VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) 
     nullptr,
     nullptr
   );
+  #endif
   
   instance = vk::createInstance(
     vk::InstanceCreateInfo(
       vk::InstanceCreateFlags(0),
       &application_info,
+      #ifdef NDEBUG
+      0, nullptr,
+      #else
       std::size(instance_layers),
       instance_layers,
+      #endif
       #ifdef NDEBUG
       instance_extensions_count,
       instance_extensions,
