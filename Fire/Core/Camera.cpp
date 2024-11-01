@@ -1,17 +1,15 @@
 /**
   ******************************************************************************
-  * @file           : Event.cpp
+  * @file           : Camera.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
-  * @date           : 24-10-27
+  * @date           : 24-10-31
   ******************************************************************************
   */
 
 
 
-#include "Event.h"
+#include "Camera.h"
 
-namespace FIRE {
-
-}
+namespace FIRE {}

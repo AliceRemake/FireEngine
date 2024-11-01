@@ -11,51 +11,99 @@
 
 
 #include "Application.h"
-#include "Event/WindowEvent.h"
-#include "Layer/ImGuiLayer.h"
-#include "HRI/Vulkan/VulkanContext.h"
+#include "RHI/Vulkan/VulkanContext.h"
+#include "Layer/LayerStack.h"
+#include <imgui.h>
 
 namespace FIRE {
 
-FireResult Application::OnEvent(const Ref<Event>& event) FIRE_NOEXCEPT {
-  if (IsA<WindowCloseEvent>(event.get())) {
-    DONE = true;
-    return FIRE_SUCCESS;
-  }
-  return LS->OnEvent(event);
-};
-  
-void Application::OnUpdate() FIRE_NOEXCEPT {
-  FIRE_INFO("Application OnUpdate Called");
-};
-  
 Application::Application() FIRE_NOEXCEPT {
-  window = Window::Create("Fire Engine", 1280, 720);
-  LS = CreateUni<LayerStack>();
-  VC = CreateUni<HRI::VulkanContext>(window.get());
-  LS->Push(new ImGuiLayer(*this));
+  window         = CreateUni<SDL3Window>("Fire Engine", 1280, 720);
+  vulkan_context = CreateUni<HRI::VulkanContext>(window.get());
+  layer_stack    = CreateUni<LayerStack>(*this);
+  image_ready.resize(MAX_FRAME_IN_FLIGHT);
+  image_finish.resize(MAX_FRAME_IN_FLIGHT);
+  for (uint32_t i = 0; i < MAX_FRAME_IN_FLIGHT; ++i) {
+    image_ready[i] = vulkan_context->GetDevice().createSemaphore(vk::SemaphoreCreateInfo());
+    image_finish[i] = vulkan_context->GetDevice().createSemaphore(vk::SemaphoreCreateInfo());
+  }
 }
 
-Application::~Application() FIRE_NOEXCEPT {
-}
-  
-const Window& Application::GetWindow() const FIRE_NOEXCEPT {
-  return *window;
+void Application::OnUpdate() FIRE_NOEXCEPT {
+  layer_stack->OnUpdate();
+  if (!resized && present) {
+    VkSemaphore wait_semaphore = image_finish[frame];
+    VkSwapchainKHR swap_chain = vulkan_context->GetSwapChain();
+    const VkPresentInfoKHR present_info = {
+      .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &wait_semaphore,
+      .swapchainCount = 1,
+      .pSwapchains = &swap_chain,
+      .pImageIndices = &image,
+      .pResults = nullptr,
+    };
+    if (const VkResult result = vkQueuePresentKHR(vulkan_context->GetGraphicsQueue(), &present_info);
+      result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR) {
+    } else if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+      resized = true;
+    } else {
+      FIRE_CRITICAL("Can Not Present Image: {}", static_cast<size_t>(result));
+      FIRE_EXIT_FAILURE();
+    }
+    present = false;
+  }
 }
 
-const LayerStack& Application::GetLS() const FIRE_NOEXCEPT {
-  return *LS;
+FireResult Application::OnEvent(SDL_Event* event) FIRE_NOEXCEPT {
+  if (event->type == SDL_EVENT_QUIT || (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED
+    && event->window.windowID == SDL_GetWindowID(window->GetNative()))) {
+    done = true;
+    return FIRE_FAILURE;
+  }
+  return layer_stack->OnEvent(event);
 }
 
-const HRI::VulkanContext& Application::GetVC() const FIRE_NOEXCEPT {
-  return *VC;
+void Application::OnResize() FIRE_NOEXCEPT {
+  vulkan_context->OnResize();
+  layer_stack->OnResize();
+  image = 0;
+  resized = false;
+}
+
+FireResult Application::NextImage() FIRE_NOEXCEPT {
+  if (const vk::ResultValue<uint32_t> result = vulkan_context->GetDevice().acquireNextImageKHR(
+    vulkan_context->GetSwapChain(),
+    0,
+    { GetImageReady() },
+    {}
+  ); result.result == vk::Result::eSuccess || result.result == vk::Result::eSuboptimalKHR) {
+    image = result.value;
+    return FIRE_SUCCESS;
+  } else if (result.result == vk::Result::eTimeout || result.result == vk::Result::eNotReady) {
+    return FIRE_FAILURE;
+  } else if (result.result == vk::Result::eErrorOutOfDateKHR) {
+    resized = true;
+    return FIRE_FAILURE;
+  } else {
+    FIRE_CRITICAL("Can Not Acquire Next Image: {}", static_cast<size_t>(result.result));
+    FIRE_EXIT_FAILURE();
+  }
 }
 
 void Application::Run() FIRE_NOEXCEPT {
-  while(!DONE) {
-    OnEvent(window->PollEvent());
+  while(!done) {
+    SDL_Event event;
+    while(SDL_PollEvent(&event)) {
+      OnEvent(&event);
+    }
     OnUpdate();
+    if (resized) {
+      OnResize();
+    }
+    NextFrame();
   }
-};
-  
+}
+
 }

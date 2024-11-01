@@ -60,3 +60,16 @@ INTERFACE
 )
 
 ADD_SUBDIRECTORY(eigen)
+
+ADD_LIBRARY(FireExternal STATIC)
+
+TARGET_LINK_LIBRARIES(FireExternal
+PUBLIC
+  spdlog::spdlog
+  SDL3::SDL3-static
+  vulkan
+  GPUOpen::VulkanMemoryAllocator
+  imgui
+  glm
+  eigen
+)

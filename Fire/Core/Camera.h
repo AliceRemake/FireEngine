@@ -1,19 +1,24 @@
 /**
   ******************************************************************************
-  * @file           : WindowEvent.cpp
+  * @file           : Camera.h
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
-  * @date           : 24-10-27
+  * @date           : 24-10-31
   ******************************************************************************
   */
 
 
 
-#include "WindowEvent.h"
+#ifndef FIRE_CAMERA_H
+#define FIRE_CAMERA_H
 
 namespace FIRE {
 
-WindowCloseEvent::WindowCloseEvent() FIRE_NOEXCEPT : Event(FIRE_EVENT_KIND_WINDOW_CLOSE) {}
+class Camera {
+
+};
 
 }
+
+#endif //FIRE_CAMERA_H

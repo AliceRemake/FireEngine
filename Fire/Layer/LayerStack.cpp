@@ -10,33 +10,23 @@
 
 
 
+#include "Layer.h"
 #include "Layer/LayerStack.h"
 
 namespace FIRE {
-
-FireResult LayerStack::OnEvent(const Ref<Event>& event) FIRE_NOEXCEPT {
-  for (uint32_t i = 0; i < top; ++i) {
-    if (layer_stack[i]->OnEvent(event)) {
-      return FIRE_SUCCESS;
-    }
-  }
-  return FIRE_FAILURE;
-}
-
-void LayerStack::OnUpdate() FIRE_NOEXCEPT {
-  for (uint32_t i = top; i > 0; --i) {
-    layer_stack[i-1]->OnUpdate();
-  }
-}
   
-LayerStack::LayerStack() FIRE_NOEXCEPT : top(0) {}
+LayerStack::LayerStack(Application& application) FIRE_NOEXCEPT : application(application), top(0) {}
 
 LayerStack::~LayerStack() FIRE_NOEXCEPT {
   for (uint32_t i = 0; i < layer_stack.size(); ++i) {
     delete layer_stack[i];
   }
 }
-  
+
+FIRE_NODISCARD Application& LayerStack::GetApplication() const FIRE_NOEXCEPT {
+  return application;
+}
+
 void LayerStack::Push(Layer* layer) FIRE_NOEXCEPT {
   if (top == layer_stack.size()) {
     layer_stack.push_back(layer);
@@ -47,7 +37,7 @@ void LayerStack::Push(Layer* layer) FIRE_NOEXCEPT {
     delete layer_stack[top];
     layer_stack[top++] = layer;
   }
-    layer->OnAttach();
+  layer->OnAttach();
 }
 
 Layer* LayerStack::Pop() FIRE_NOEXCEPT {
@@ -57,5 +47,26 @@ Layer* LayerStack::Pop() FIRE_NOEXCEPT {
   layer_stack.back()->OnDetach();
   return layer_stack[--top];
 }
-  
+
+void LayerStack::OnUpdate() const FIRE_NOEXCEPT {
+  for (uint32_t i = top; i > 0; --i) {
+    layer_stack[i-1]->OnUpdate();
+  }
+}
+
+FireResult LayerStack::OnEvent(SDL_Event* event) const FIRE_NOEXCEPT {
+  for (uint32_t i = 0; i < top; ++i) {
+    if (layer_stack[i]->OnEvent(event) == FIRE_FAILURE) {
+      return FIRE_FAILURE;
+    }
+  }
+  return FIRE_SUCCESS;
+}
+
+void LayerStack::OnResize() const FIRE_NOEXCEPT {
+  for (uint32_t i = 0; i < top; ++i) {
+    layer_stack[i]->OnResize();
+  }
+}
+
 }

@@ -14,26 +14,28 @@
 #define FIRE_LAYER_STACK_H
 
 #include "Common.h"
-#include "Layer.h"
+#include "Core/Application.h"
 
 namespace FIRE {
 
-class FIRE_API LayerStack final : public OnEventTrait, OnUpdateTrait {
-public:
-  FireResult OnEvent(const Ref<Event>& event) FIRE_NOEXCEPT FIRE_OVERRIDE;
+class Layer;
 
-public:
-  void OnUpdate() FIRE_NOEXCEPT FIRE_OVERRIDE;
-
+class FIRE_API LayerStack {
 private:
-  uint32_t top;
+  Application&   application;
+  uint32_t       top;
   Vector<Layer*> layer_stack;
 
 public:
-  LayerStack() FIRE_NOEXCEPT;
-  ~LayerStack() FIRE_NOEXCEPT FIRE_OVERRIDE;
-  void Push(Layer* layer) FIRE_NOEXCEPT;
-  Layer* Pop() FIRE_NOEXCEPT;
+  explicit LayerStack(Application& application) FIRE_NOEXCEPT;
+  ~LayerStack() FIRE_NOEXCEPT;
+  
+  FIRE_NODISCARD Application& GetApplication() const FIRE_NOEXCEPT;
+  void           Push(Layer* layer)                  FIRE_NOEXCEPT;
+  Layer*         Pop()                               FIRE_NOEXCEPT;
+  void           OnUpdate()                    const FIRE_NOEXCEPT;
+  FireResult     OnEvent(SDL_Event* event)     const FIRE_NOEXCEPT;
+  void           OnResize()                    const FIRE_NOEXCEPT;
 
 };
 

@@ -20,17 +20,6 @@ ELSE()
   MESSAGE(FATAL_ERROR "FATAL: UnSupported Compiler")
 ENDIF()
 
-
-OPTION(FIRE_USE_SDL3_WINDOW "Use Sdl3 Window" ON)
-OPTION(FIRE_USE_VULKAN_HRI "Use Vulkan HRI" ON)
-
-IF (FIRE_USE_SDL3_WINDOW)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_SDL3_WINDOW)
-ENDIF()
-IF (FIRE_USE_VULKAN_HRI)
-  LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_USE_VULKAN_HRI)
-ENDIF()
-
 LIST(APPEND FIRE_COMPILE_DEFINITIONS FIRE_SHARED_LIBRARY)
 
 ADD_LIBRARY(Fire SHARED)
@@ -58,35 +47,21 @@ PUBLIC
   Common.h
   Core/Logger.h
   Core/Logger.cpp
-  Core/Trait/OnEventTrait.h
-  Core/Trait/OnUpdateTrait.h
-  Event/Event.h
-  Event/Event.cpp
-  Event/WindowEvent.h
-  Event/WindowEvent.cpp
-  Window/Window.h
-  Window/Window.cpp
-  Window/Backend/SDL3Window.h
-  Window/Backend/SDL3Window.cpp
-  HRI/Vulkan/VulkanContext.h
-  HRI/Vulkan/VulkanContext.cpp
-  Layer/Layer.h
-  Layer/Layer.cpp
-  Layer/LayerStack.h
-  Layer/LayerStack.cpp
-  Layer/ImGuiLayer.h
-  Layer/ImGuiLayer.cpp
+  Window/SDL3Window.h
+  Window/SDL3Window.cpp
+  RHI/Vulkan/VulkanContext.h
+  RHI/Vulkan/VulkanContext.cpp
   Core/Application.h
   Core/Application.cpp
+  Layer/LayerStack.h
+  Layer/LayerStack.cpp
+  Layer/Layer.h
+  Layer/Layer.cpp
+  Layer/ImGuiLayer.h
+  Layer/ImGuiLayer.cpp
 )
 
 TARGET_LINK_LIBRARIES(Fire
 PUBLIC
-  spdlog::spdlog
-  SDL3::SDL3-static
-  vulkan
-  GPUOpen::VulkanMemoryAllocator
-  imgui
-  glm
-  eigen
+  FireExternal
 )

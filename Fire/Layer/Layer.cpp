@@ -14,19 +14,47 @@
 
 namespace FIRE {
 
-FireResult Layer::OnEvent(const Ref<Event> &event) FIRE_NOEXCEPT {
+Layer::Layer(LayerStack& layer_stack) FIRE_NOEXCEPT : layer_stack(layer_stack) {
+  const Application& APP = layer_stack.GetApplication();
+  const HRI::VulkanContext& VC = APP.GetVulkanContext();
+  fences.resize(APP.MAX_FRAME_IN_FLIGHT);
+  for (uint32_t i = 0; i < APP.MAX_FRAME_IN_FLIGHT; ++i) {
+    fences[i] = VC.GetDevice().createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
+  }
+}
+
+FIRE_NODISCARD LayerStack& Layer::GetLayerStack() const FIRE_NOEXCEPT { return layer_stack; }
+
+FIRE_NODISCARD const vk::Fence&  Layer::GetFence() const FIRE_NOEXCEPT {
+  return fences[layer_stack.GetApplication().GetFrame()];
+}
+
+FireResult Layer::OnEvent(SDL_Event* event) FIRE_NOEXCEPT {
   FIRE_UNUSE(event);
   FIRE_CRITICAL("Can Not Call OnEvent On Abstract Layer!");
-  return FIRE_FAILURE;
+  FIRE_EXIT_FAILURE();
 }
   
 void Layer::OnUpdate() FIRE_NOEXCEPT {
   FIRE_CRITICAL("Can Not Call OnUpdate On Abstract Layer!");
+  FIRE_EXIT_FAILURE();
 }
 
-#ifndef NDEBUG 
+void Layer::OnResize() FIRE_NOEXCEPT {
+  FIRE_CRITICAL("Can Not Call OnResize On Abstract Layer!");
+  FIRE_EXIT_FAILURE();
+}
+
+#ifndef NDEBUG
   
-Layer::Layer(const String& name) FIRE_NOEXCEPT : name(name) {}
+Layer::Layer(LayerStack& layer_stack, const String& name) FIRE_NOEXCEPT : layer_stack(layer_stack), name(name) {
+  const Application& APP = layer_stack.GetApplication();
+  const HRI::VulkanContext& VC = APP.GetVulkanContext();
+  fences.resize(APP.MAX_FRAME_IN_FLIGHT);
+  for (uint32_t i = 0; i < APP.MAX_FRAME_IN_FLIGHT; ++i) {
+    fences[i] = VC.GetDevice().createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
+  }
+}
   
 FIRE_CONSTEXPR const String& Layer::GetName() const FIRE_NOEXCEPT { return name; }
 

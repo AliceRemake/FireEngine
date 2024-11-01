@@ -25,7 +25,7 @@ static VkBool32 VKAPI_PTR debugCallback(
 );
 #endif
 
-VulkanContext::VulkanContext(const Window* window) FIRE_NOEXCEPT {
+VulkanContext::VulkanContext(SDL3Window* window) FIRE_NOEXCEPT : window(window) {
   FIRE_CONSTEXPR vk::ApplicationInfo application_info(
     "Fire Engin",
     vk::makeApiVersion(0, 0,0,0),
@@ -93,17 +93,12 @@ VulkanContext::VulkanContext(const Window* window) FIRE_NOEXCEPT {
   messenger = instance.createDebugUtilsMessengerEXT(messenger_create_info, nullptr, *loader);
   #endif
 
-  #ifdef FIRE_USE_SDL3_WINDOW
   SDL_Vulkan_CreateSurface(
-    static_cast<SDL_Window *>(window->GetNative()),
+    window->GetNative(),
     instance,
     nullptr,
     reinterpret_cast<VkSurfaceKHR*>(&surface)
   );
-  #else
-  CLIENT_CRITICAL("No Window Backend Specified!");
-  exit(EXIT_FAILURE);
-  #endif
 
   const Vector<vk::PhysicalDevice> physical_devices = instance.enumeratePhysicalDevices();
 
@@ -179,9 +174,9 @@ VulkanContext::VulkanContext(const Window* window) FIRE_NOEXCEPT {
 
   vk::SurfaceCapabilitiesKHR capabilities = physical_device.getSurfaceCapabilitiesKHR(surface);
   
-  uint32_t image_count = std::min(capabilities.minImageCount + 1, capabilities.maxImageCount);
+  image_count = std::min(capabilities.minImageCount + 1, capabilities.maxImageCount);
   
-  vk::Extent2D image_extent = capabilities.currentExtent;
+  image_extent = capabilities.currentExtent;
 
   surface_format = physical_device.getSurfaceFormatsKHR(surface)[0];
 
@@ -228,10 +223,7 @@ VulkanContext::VulkanContext(const Window* window) FIRE_NOEXCEPT {
         ),
         vk::ImageSubresourceRange(
           vk::ImageAspectFlagBits::eColor,
-          0,
-          1,
-          0,
-          1
+          0,1,0,1
         ),
         nullptr
       )
@@ -241,6 +233,72 @@ VulkanContext::VulkanContext(const Window* window) FIRE_NOEXCEPT {
 
 VulkanContext::~VulkanContext() FIRE_NOEXCEPT {}
 
+void VulkanContext::OnResize() FIRE_NOEXCEPT {
+  device.waitIdle();
+  
+  const vk::SurfaceCapabilitiesKHR capabilities = physical_device.getSurfaceCapabilitiesKHR(surface);
+  
+  image_count = std::min(capabilities.minImageCount + 1, capabilities.maxImageCount);
+  
+  image_extent = capabilities.currentExtent;
+
+  const Vector<uint32_t> queue_families = {graphics_family.value()};
+  
+  const vk::SwapchainCreateInfoKHR swap_chain_create_info(
+    vk::SwapchainCreateFlagsKHR(0),
+    surface,
+    image_count,
+    surface_format.format,
+    surface_format.colorSpace,
+    image_extent,
+    1,
+    vk::ImageUsageFlagBits::eColorAttachment,
+    vk::SharingMode::eExclusive,
+    queue_families.size(),
+    queue_families.data(),
+    physical_device.getSurfaceCapabilitiesKHR(surface).currentTransform,
+    vk::CompositeAlphaFlagBitsKHR::eOpaque,
+    present_mode,
+    vk::True,
+    VK_NULL_HANDLE,
+    nullptr
+  );
+
+  for (uint32_t i = 0; i < image_views.size(); ++i) {
+    device.destroyImageView(image_views[i]);
+  }
+  
+  device.destroySwapchainKHR(swap_chain);
+  
+  swap_chain = device.createSwapchainKHR(swap_chain_create_info);
+  
+  images = device.getSwapchainImagesKHR(swap_chain);
+
+  image_views.resize(images.size());
+  
+  for (uint32_t i = 0; i < images.size(); ++i) {
+    image_views[i] = device.createImageView(
+      vk::ImageViewCreateInfo(
+        vk::ImageViewCreateFlags(0),
+        images[i],
+        vk::ImageViewType::e2D,
+        surface_format.format,
+        vk::ComponentMapping(
+          vk::ComponentSwizzle::eR,
+          vk::ComponentSwizzle::eG,
+          vk::ComponentSwizzle::eB,
+          vk::ComponentSwizzle::eA
+        ),
+        vk::ImageSubresourceRange(
+          vk::ImageAspectFlagBits::eColor,
+          0,1,0,1
+        ),
+        nullptr
+      )
+    );
+  }
+}
+
 #ifndef NDEBUG
 static VkBool32 VKAPI_PTR debugCallback(
   // ReSharper disable once CppParameterMayBeConst
@@ -248,7 +306,7 @@ static VkBool32 VKAPI_PTR debugCallback(
   // ReSharper disable once CppParameterMayBeConst
   VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-  // ReSharper disable once CppParameterMayBeConst
+  // ReSharper disable once CppParameterMayBeConstPtrOrRef
   void*                                       pUserData
 ){
   FIRE_UNUSE(pUserData);

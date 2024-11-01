@@ -11,17 +11,17 @@
 
 
 #include "Layer/ImGuiLayer.h"
-#include "Core/Application.h"
-#include "HRI/Vulkan/VulkanContext.h"
+#include "Window/SDL3Window.h"
+#include <imgui.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_vulkan.h>
 
 namespace FIRE {
 
-ImGuiLayer::ImGuiLayer(const Application& application) FIRE_NOEXCEPT
-  : Layer("ImGui Layer"), application(application){}
+ImGuiLayer::ImGuiLayer(LayerStack& layer_stack) FIRE_NOEXCEPT
+  : Layer(layer_stack, "ImGui Layer") {}
 
-vk::DescriptorPool ImGuiLayer::CreateDescriptorPool(const HRI::VulkanContext& VC) FIRE_NOEXCEPT {
+vk::DescriptorPool ImGuiLayer::CreateDescriptorPool(HRI::VulkanContext& VC) FIRE_NOEXCEPT {
   FIRE_CONSTEXPR vk::DescriptorPoolSize descriptor_pool_sizes[] = {
     vk::DescriptorPoolSize(
       vk::DescriptorType::eCombinedImageSampler,
@@ -38,13 +38,141 @@ vk::DescriptorPool ImGuiLayer::CreateDescriptorPool(const HRI::VulkanContext& VC
   );
 }
 
-vk::RenderPass ImGuiLayer::CreateRenderPass(const HRI::VulkanContext& VC) FIRE_NOEXCEPT {
+void ImGuiLayer::OnUpdate() FIRE_NOEXCEPT {
+  Application& APP = layer_stack.GetApplication();
+  const HRI::VulkanContext& VC = APP.GetVulkanContext();
+  
+  ImGui_ImplSDL3_NewFrame();
+  ImGui_ImplVulkan_NewFrame();
+  ImGui::NewFrame();
+
+  SetUpLayout();
+  
+  ImGui::Render();
+  ImDrawData* draw_data = ImGui::GetDrawData();
+
+  if (const vk::Result result = VC.GetDevice().waitForFences(
+    { GetFence() }, vk::True, 0
+  ); result == vk::Result::eSuccess) {
+    VC.GetDevice().resetFences({ GetFence() });
+  } else if (result == vk::Result::eTimeout) {
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
+    }
+    return;
+  } else {
+    FIRE_CRITICAL("Can Not Wait For Fence: {}", static_cast<size_t>(result));
+    FIRE_EXIT_FAILURE();
+  }
+
+  if (APP.NextImage() == FIRE_FAILURE) {
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
+    }
+    return;
+  }
+
+  const vk::CommandBuffer& CB = command_buffers[APP.GetFrame()];
+  const vk::Framebuffer& FB = frame_buffers[APP.GetImage()];
+  
+  CB.reset(vk::CommandBufferResetFlags(0));
+  CB.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlags(0)));
+
+  vk::ClearValue clear_value = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
+  
+  CB.beginRenderPass(
+    vk::RenderPassBeginInfo(
+      render_pass,
+      FB,
+      vk::Rect2D(vk::Offset2D{0,0}, VC.GetImageExtent()),
+      vk::ArrayProxyNoTemporaries<const vk::ClearValue>{clear_value},
+      nullptr
+    ), vk::SubpassContents::eInline
+  );
+  
+  ImGui_ImplVulkan_RenderDrawData(draw_data, CB);
+
+  CB.endRenderPass();
+  
+  CB.end();
+
+  auto wait_dst_stage_mask = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+  
+  const vk::SubmitInfo submit_infos[] = {
+    vk::SubmitInfo(
+      { APP.GetImageReady() },
+      { wait_dst_stage_mask },
+      { CB },
+      { APP.GetImageFinish() }
+    )
+  };
+  VC.GetGraphicsQueue().submit(submit_infos, { GetFence() });
+
+  if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+  {
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+  }
+  
+  APP.SetPresent(true);
+}
+
+FireResult ImGuiLayer::OnEvent(SDL_Event* event) FIRE_NOEXCEPT {
+  ImGui_ImplSDL3_ProcessEvent(event);
+  return FIRE_SUCCESS;
+}
+
+void ImGuiLayer::OnResize() FIRE_NOEXCEPT {
+  const Application& APP = layer_stack.GetApplication();
+  const HRI::VulkanContext& VC = APP.GetVulkanContext();
+
+  for (uint32_t i = 0; i < frame_buffers.size(); ++i) {
+    VC.GetDevice().destroyFramebuffer(frame_buffers[i]);
+  }
+  
+  frame_buffers.resize(VC.GetImageViews().size());
+  for (uint32_t i = 0; i < VC.GetImageViews().size(); ++i) {
+    frame_buffers[i] = VC.GetDevice().createFramebuffer(
+      vk::FramebufferCreateInfo(
+        vk::FramebufferCreateFlags(0),
+        render_pass,
+        { VC.GetImageView(i) },
+        VC.GetImageExtent().width,
+        VC.GetImageExtent().height,
+        { 1 }, nullptr
+      )
+    );
+  }
+  
+  // command_pool = VC.GetDevice().createCommandPool(
+  //   vk::CommandPoolCreateInfo(
+  //     vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+  //     VC.GetGraphicsFamily(),
+  //     nullptr
+  //   )
+  // );
+
+  // VC.GetDevice().freeCommandBuffers(command_pool, command_buffers);
+  // command_buffers = VC.GetDevice().allocateCommandBuffers(
+  //   vk::CommandBufferAllocateInfo(
+  //     command_pool,
+  //     vk::CommandBufferLevel::ePrimary,
+  //     APP.MAX_FRAME_IN_FLIGHT, nullptr
+  //   )
+  // );
+}
+
+vk::RenderPass ImGuiLayer::CreateRenderPass(HRI::VulkanContext& VC) FIRE_NOEXCEPT {
   const vk::AttachmentDescription attachments[] = {
     vk::AttachmentDescription(
       vk::AttachmentDescriptionFlags(0),
       VC.GetSurfaceFormat().format,
       vk::SampleCountFlagBits::e1,
-      vk::AttachmentLoadOp::eClear, // TODO
+      vk::AttachmentLoadOp::eClear,
       vk::AttachmentStoreOp::eStore,
       vk::AttachmentLoadOp::eDontCare,
       vk::AttachmentStoreOp::eDontCare,
@@ -89,16 +217,9 @@ vk::RenderPass ImGuiLayer::CreateRenderPass(const HRI::VulkanContext& VC) FIRE_N
   );
 }
 
-void ImGuiLayer::SetUpStyle() FIRE_NOEXCEPT {
-  
-}
-  
-void ImGuiLayer::SetUpLayout() FIRE_NOEXCEPT {
-  ImGui::ShowDemoWindow();
-}
-  
 void ImGuiLayer::OnAttach() FIRE_NOEXCEPT {
-  const HRI::VulkanContext& VC = application.GetVC();
+  const Application& APP = layer_stack.GetApplication();
+  HRI::VulkanContext& VC = APP.GetVulkanContext();
   
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -124,8 +245,24 @@ void ImGuiLayer::OnAttach() FIRE_NOEXCEPT {
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
   }
 
-  descriptor_pool = CreateDescriptorPool(application.GetVC());
-  render_pass = CreateRenderPass(application.GetVC());
+  descriptor_pool = CreateDescriptorPool(VC);
+
+  render_pass = CreateRenderPass(VC);
+
+  frame_buffers.resize(VC.GetImageViews().size());
+  for (uint32_t i = 0; i < VC.GetImageViews().size(); ++i) {
+    frame_buffers[i] = VC.GetDevice().createFramebuffer(
+      vk::FramebufferCreateInfo(
+        vk::FramebufferCreateFlags(0),
+        render_pass,
+        vk::ArrayProxyNoTemporaries<const vk::ImageView>(VC.GetImageView(i)),
+        VC.GetImageExtent().width,
+        VC.GetImageExtent().height,
+        { 1 }, nullptr
+      )
+    );
+  }
+  
   command_pool = VC.GetDevice().createCommandPool(
     vk::CommandPoolCreateInfo(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
@@ -133,17 +270,18 @@ void ImGuiLayer::OnAttach() FIRE_NOEXCEPT {
       nullptr
     )
   );
-  command_buffer = VC.GetDevice().allocateCommandBuffers(
+
+  command_buffers = VC.GetDevice().allocateCommandBuffers(
     vk::CommandBufferAllocateInfo(
       command_pool,
       vk::CommandBufferLevel::ePrimary,
-      1, nullptr
+      APP.MAX_FRAME_IN_FLIGHT, nullptr
     )
-  )[0];
+  );
   
   // Setup Platform/Renderer backends
   ImGui_ImplSDL3_InitForVulkan(
-    static_cast<SDL_Window*>(application.GetWindow().GetNative())
+    APP.GetWindow().GetNative()
   );
   ImGui_ImplVulkan_InitInfo init_info = {};
   init_info.Instance = VC.GetInstance();
@@ -154,9 +292,9 @@ void ImGuiLayer::OnAttach() FIRE_NOEXCEPT {
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool = descriptor_pool;
   init_info.RenderPass = render_pass;
-  init_info.Subpass = 0; // TODO imgui can be one of user render pass or use a separate render pass
-  init_info.MinImageCount = 2;
-  init_info.ImageCount = 2;
+  init_info.Subpass = 0;
+  init_info.MinImageCount = VC.GetImageCount();
+  init_info.ImageCount = VC.GetImageCount();
   init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
   init_info.Allocator = nullptr;
   init_info.CheckVkResultFn = nullptr;
@@ -169,23 +307,12 @@ void ImGuiLayer::OnDetach() FIRE_NOEXCEPT {
   ImGui::DestroyContext();
 }
 
-void ImGuiLayer::OnUpdate() FIRE_NOEXCEPT {
-  ImGui_ImplSDL3_NewFrame();
-  ImGui_ImplVulkan_NewFrame();
-  ImGui::NewFrame();
-
-  SetUpLayout();
-  
-  ImGui::Render();
-  ImDrawData* draw_data = ImGui::GetDrawData();
-  ImGui_ImplVulkan_RenderDrawData(draw_data, command_buffer);
-
+void ImGuiLayer::SetUpStyle() FIRE_NOEXCEPT {
   
 }
-
-FireResult ImGuiLayer::OnEvent(const Ref<Event>& event) FIRE_NOEXCEPT {
-  FIRE_UNUSE(event);
-  return FIRE_SUCCESS;
-}
   
+void ImGuiLayer::SetUpLayout() FIRE_NOEXCEPT {
+
+}
+
 }

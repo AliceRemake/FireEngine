@@ -22,29 +22,16 @@ int main(const int argc, char** argv) {
   (void)argc;
   (void)argv;
   
-  // FIRE::Logger::SetPattern("");
-
-  #ifdef FIRE_USE_SDL3_WINDOW
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
     CLIENT_CRITICAL("Can Not Initialize SDL3 Context!: {}", SDL_GetError());
     exit(EXIT_FAILURE);
   }
   CLIENT_INFO("Initialize SDL3 Context Success.");
-  #else
-  CLIENT_CRITICAL("No Window Backend Specified!");
-  exit(EXIT_FAILURE);
-  #endif
 
   FIRE::Application* app = CreateApplication();
   app->Run();
   
-  
-  #ifdef FIRE_USE_SDL3_WINDOW
   SDL_Quit();
-  #else
-  CLIENT_CRITICAL("No Window Backend Specified!");
-  exit(EXIT_FAILURE);
-  #endif
   
   return 0;
 }

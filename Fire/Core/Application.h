@@ -14,34 +14,55 @@
 #define FIRE_APPLICATION_H
 
 #include "Common.h"
-#include "Window/Window.h"
-#include "Layer/LayerStack.h"
-#include "HRI/Vulkan/VulkanContext.h"
+#include "Window/SDL3Window.h"
+#include "RHI/Vulkan/VulkanContext.h"
 
 namespace FIRE {
 
-class FIRE_API Application : public OnEventTrait, OnUpdateTrait {
-public:
-  FireResult OnEvent(const Ref<Event>& event) FIRE_NOEXCEPT FIRE_OVERRIDE;
+class LayerStack;
 
+class FIRE_API Application {
 public:
-  void OnUpdate() FIRE_NOEXCEPT FIRE_OVERRIDE;
-
+  static FIRE_CONSTEXPR uint32_t MAX_FRAME_IN_FLIGHT = 2;
 protected:
-  bool DONE = false;
-  Uni<Window> window = nullptr;
-  Uni<LayerStack> LS = nullptr;
-  Uni<HRI::VulkanContext> VC = nullptr;
+  bool                    done           = false;
+  bool                    resized        = false;
+  bool                    present        = false;
+  uint32_t                frame          = 0;
+  uint32_t                image          = 0;
+  Uni<SDL3Window>         window         = nullptr;
+  Uni<LayerStack>         layer_stack    = nullptr;
+  Uni<HRI::VulkanContext> vulkan_context = nullptr;
+  Vector<vk::Semaphore>   image_ready    = {};
+  Vector<vk::Semaphore>   image_finish   = {};
   
 protected:
   Application() FIRE_NOEXCEPT;
-  ~Application() FIRE_NOEXCEPT FIRE_OVERRIDE;
-
+  virtual ~Application() FIRE_NOEXCEPT = default;
+  
 public:
-  const Window& GetWindow() const FIRE_NOEXCEPT;
-  const LayerStack& GetLS() const FIRE_NOEXCEPT;
-  const HRI::VulkanContext& GetVC() const FIRE_NOEXCEPT;
-  virtual void Run() FIRE_NOEXCEPT;
+  FIRE_NODISCARD bool Done()const FIRE_NOEXCEPT { return done; }
+  FIRE_NODISCARD bool Resized()  const FIRE_NOEXCEPT { return resized; }
+  FIRE_NODISCARD bool Present()  const FIRE_NOEXCEPT { return present; }
+
+  FIRE_NODISCARD uint32_t            GetFrame()         const FIRE_NOEXCEPT { return frame; }
+  FIRE_NODISCARD uint32_t            GetImage()         const FIRE_NOEXCEPT { return image; }
+  FIRE_NODISCARD SDL3Window&         GetWindow()        const FIRE_NOEXCEPT { return *window; }
+  FIRE_NODISCARD LayerStack&         GetLayerStack()    const FIRE_NOEXCEPT { return *layer_stack; }
+  FIRE_NODISCARD HRI::VulkanContext& GetVulkanContext() const FIRE_NOEXCEPT { return *vulkan_context; }
+  FIRE_NODISCARD vk::Semaphore&      GetImageReady()          FIRE_NOEXCEPT { return image_ready[frame]; }
+  FIRE_NODISCARD vk::Semaphore&      GetImageFinish()         FIRE_NOEXCEPT { return image_finish[frame]; }
+  
+  void       SetDone(const bool b)    FIRE_NOEXCEPT { done = b; }
+  void       SetResized(const bool b) FIRE_NOEXCEPT { resized = b; }
+  void       SetPresent(const bool b) FIRE_NOEXCEPT { present = b; }
+  void       NextFrame()              FIRE_NOEXCEPT { frame = (frame + 1) % MAX_FRAME_IN_FLIGHT; }
+  FireResult NextImage()              FIRE_NOEXCEPT;
+  
+  virtual void       OnUpdate()                FIRE_NOEXCEPT;
+  virtual FireResult OnEvent(SDL_Event* event) FIRE_NOEXCEPT;
+  virtual void       OnResize()                FIRE_NOEXCEPT;
+  virtual void       Run()                     FIRE_NOEXCEPT;
 
 };
 

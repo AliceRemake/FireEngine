@@ -15,17 +15,11 @@
 #define FIRE_COMMON_H
 
 /* Handle HRI */
-#ifdef FIRE_USE_VULKAN_HRI
-  #include <vulkan/vulkan.hpp>
-#endif
+#include <vulkan/vulkan.hpp>
 
 /* Handle Window */
-#ifdef FIRE_USE_SDL3_WINDOW
-  #include <SDL3/SDL.h>
-  #ifdef FIRE_USE_VULKAN_HRI
-    #include <SDL3/SDL_vulkan.h>
-  #endif
-#endif
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 /* Frequently Used Headers */
 #include <cassert>
@@ -33,16 +27,16 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
-#include <functional>
+#include <queue>
+#include <tuple>
+#include <vector>
+#include <string>
 #include <memory>
 #include <optional>
-#include <queue>
-#include <string>
-#include <tuple>
+#include <filesystem>
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 /* Frequently Used Third Party Headers */
 #include <glm/glm.hpp>
@@ -52,21 +46,27 @@ namespace FIRE {
 
 /* Handle Platform Different */
 #ifdef FIRE_PLATFORM_WINDOWS
+  #define FIRE_DEBUGBREAK() do { __debugbreak(); } while(0)
   #ifdef FIRE_SHARED_LIBRARY
     #define FIRE_API __declspec(dllexport)
   #else
     #define FIRE_API __declspec(dllimport)
   #endif
 #elif defined(FIRE_PLATFORM_LINUX)
+  #define FIRE_DEBUGBREAK do { raise(SIGTRAP); } while(0)
   #ifdef FIRE_SHARED_LIBRARY
-    #define FIRE_API /* TODO */
+    #define FIRE_API __attribute__(visibility("default"))
   #else
-    #define FIRE_API /* TODO */
+    #define FIRE_API 
   #endif
 #endif
 
 /* Handle Compiler Difference */
-// TODO
+#ifdef FIRE_COMPILER_GNU
+
+#elif defined(FIRE_COMPILER_MSVC)
+
+#endif
 
 /* Handle C/C++ Version Difference */
 // C++11
@@ -100,16 +100,10 @@ namespace FIRE {
 
 #define FIRE_UNUSE(x) ((void)x)
   
-#ifdef FIRE_PLATFORM_WINDOWS
-  #define FIRE_DEBUGBREAK() do { __debugbreak(); } while(0)
-#else
-  #define FIRE_DEBUGBREAK do { raise(SIGTRAP); } while(0)
-#endif
-
 #ifdef NDEBUG
   #define FIRE_ASSERT(exp)
 #else
-  #define FIRE_ASSERT(exp) do { assert(exp); FIRE_DEBUGBREAK(); } while (0)
+  #define FIRE_ASSERT(exp) do { if(!!(exp)); else FIRE_DEBUGBREAK(); } while (0)
 #endif
 
 #define FIRE_EXIT_SUCCESS() do { exit(EXIT_SUCCESS); } while (0)

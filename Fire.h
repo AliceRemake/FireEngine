@@ -14,10 +14,8 @@
 #define FIRE_H
 
 #include "Fire/Common.h"
-#include "Fire/Event/Event.h"
-#include "Fire/Event/WindowEvent.h"
-#include "Fire/Window/Window.h"
-#include "Fire/HRI/Vulkan/VulkanContext.h"
+#include "Fire/Window/SDL3Window.h"
+#include "Fire/RHI/Vulkan/VulkanContext.h"
 #include "Fire/Layer/Layer.h"
 #include "Fire/Layer/ImGuiLayer.h"
 #include "Fire/Core/Application.h"

@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : Event.h
+  * @file           : Sandbox.cpp
   * @author         : AliceRemake
   * @brief          : None
   * @attention      : None
@@ -10,21 +10,11 @@
 
 
 
-#ifndef FIRE_EVENT_H
-#define FIRE_EVENT_H
+#include <Fire.h>
 
-#include "Common.h"
+class EmptyApplication final : public FIRE::Application {};
 
-namespace FIRE {
-
-class FIRE_API Event {
-  FIRE_RTTI_BASE(
-    Event,
-    FIRE_EVENT_KIND_WINDOW_CLOSE,
-  )
-
-};
-
+FIRE_NODISCARD FIRE::Application* CreateApplication() FIRE_NOEXCEPT
+{
+  return new EmptyApplication();
 }
-
-#endif //FIRE_EVENT_H
